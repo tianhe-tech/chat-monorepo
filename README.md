@@ -6,6 +6,9 @@ A monorepo for frontend (and possibly backend) utilities and runtime abstraction
 
 **Status:** Work in Progress (WIP)
 
+> [!NOTE]
+> Part of this README file is ai-generated. Terms of project conventions are subject to change.
+
 ## Table of Contents
 
 - [Features and Scope](#features-and-scope)
