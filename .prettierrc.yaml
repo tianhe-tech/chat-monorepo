@@ -1,0 +1,10 @@
+singleQuote: true
+arrowParens: always
+endOfLine: lf
+printWidth: 120
+jsxSingleQuote: true
+vueIndentScriptAndStyle: true
+semi: false
+plugins:
+  - "@prettier/plugin-oxc"
+  - "prettier-plugin-tailwindcss"
