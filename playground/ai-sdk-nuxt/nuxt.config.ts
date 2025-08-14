@@ -16,4 +16,9 @@ export default defineNuxtConfig({
   ui: {
     fonts: false,
   },
+  runtimeConfig: {
+    public: {
+      deepseekApiKey: '',
+    },
+  },
 })

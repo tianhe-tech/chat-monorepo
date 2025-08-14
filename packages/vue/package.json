@@ -2,12 +2,38 @@
   "name": "@chat-monorepo/vue",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "./dist/index.mjs",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsdown",
+    "build-watch": "tsdown --watch"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "packageManager": "pnpm@10.14.0"
+  "packageManager": "pnpm@10.14.0",
+  "devDependencies": {
+    "@ai-sdk/vue": "^2.0.12",
+    "tsdown": "^0.14.1",
+    "unplugin-vue": "^7.0.1",
+    "vue-tsc": "^3.0.5"
+  },
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "exports": {
+      ".": "./dist/index.mjs",
+      "./package.json": "./package.json"
+    }
+  },
+  "peerDependencies": {
+    "@ai-sdk/vue": "^2.0.12"
+  },
+  "dependencies": {
+    "ai": "^5.0.12"
+  }
 }
