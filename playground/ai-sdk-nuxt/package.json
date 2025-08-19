@@ -11,13 +11,12 @@
   },
   "dependencies": {
     "@ai-sdk/deepseek": "^1.0.7",
-    "@ai-sdk/vue": "^2.0.12",
+    "@ai-sdk/vue": "catalog:",
     "@chat-monorepo/vue": "workspace:*",
     "@chat-monorepo/design": "workspace:*",
     "@nuxt/eslint": "1.8.0",
     "@nuxt/ui": "^3.3.0",
-    "ai": "^5.0.12",
-    "eslint": "^9.33.0",
+    "ai": "catalog:",
     "nuxt": "^4.0.3",
     "vue": "^3.5.18",
     "vue-router": "^4.5.1"
