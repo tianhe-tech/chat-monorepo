@@ -1,0 +1,3 @@
+export function helloWord() {
+  console.log('hello world')
+}

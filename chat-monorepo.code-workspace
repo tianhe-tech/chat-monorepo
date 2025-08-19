@@ -1,0 +1,27 @@
+{
+  "folders": [
+    {
+      "name": "✨ chat-monorepo",
+      "path": ".",
+    },
+    {
+      "name": "🚀 backend",
+      "path": "apps/backend",
+    },
+    {
+      "name": "📦 @chat-monorepo/design",
+      "path": "packages/design",
+    },
+    {
+      "name": "📦 @chat-monorepo/vue",
+      "path": "packages/vue",
+    },
+    {
+      "name": "ai-sdk-nuxt",
+      "path": "playground/ai-sdk-nuxt",
+    },
+  ],
+  "settings": {
+    "oxc.enable": true,
+  },
+}

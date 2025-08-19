@@ -1,0 +1,8 @@
+@layer base {
+  :root,
+  .light {
+    --user-text-bg: var(--color-gray-200);
+
+    --assistant-reasoning-color: var(--color-gray-500);
+  }
+}

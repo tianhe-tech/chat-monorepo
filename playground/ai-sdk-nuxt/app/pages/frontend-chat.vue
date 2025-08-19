@@ -1,7 +1,9 @@
 <script setup lang="ts">
   import { Chat } from '@ai-sdk/vue'
-  import { buildSimpleClientOnlyTransport } from '@chat-monorepo/vue'
   import { createDeepSeek } from '@ai-sdk/deepseek'
+
+  import { buildSimpleClientOnlyTransport } from '@chat-monorepo/vue'
+  import theme from '@chat-monorepo/design/theme'
 
   const { deepseekApiKey } = useRuntimeConfig().public
 
@@ -17,15 +19,18 @@
     chat.sendMessage({ text: input.value.trim() })
     input.value = ''
   }
+
+  const uiThread = theme.thread()
+  const uiMessage = theme.message()
 </script>
 
 <template>
-  <div class="flex h-screen flex-col">
-    <div class="grow overflow-y-auto">
+  <div :class="uiThread.base({ class: 'h-screen' })">
+    <div :class="uiThread.content()">
       <template v-for="message in chat.messages" :key="message.id">
         <div v-if="message.role === 'assistant'" class="text-left">
           <template v-for="part in message.parts" :key="part.type">
-            <div v-if="part.type === 'reasoning'" class="bg-teal-100">
+            <div v-if="part.type === 'reasoning'" :class="uiMessage.reasoning({ role: 'assistant' })">
               {{ part.text }}
             </div>
             <div v-else-if="part.type === 'text'">
@@ -33,9 +38,9 @@
             </div>
           </template>
         </div>
-        <div v-else-if="message.role === 'user'" class="text-right">
+        <div v-else-if="message.role === 'user'" :class="uiMessage.base({ role: 'user' })">
           <template v-for="part in message.parts" :key="part.type">
-            <div v-if="part.type === 'text'">
+            <div v-if="part.type === 'text'" :class="uiMessage.text({ role: 'user' })">
               {{ part.text }}
             </div>
           </template>
@@ -43,8 +48,10 @@
       </template>
     </div>
 
-    <div class="p-2">
-      <textarea class="w-full border" v-model="input" @keydown.enter.exact="onSubmit" />
+    <div :class="uiThread.bottom()">
+      <div class="p-2">
+        <textarea class="w-full border" v-model="input" @keydown.enter.exact="onSubmit" />
+      </div>
     </div>
   </div>
 </template>

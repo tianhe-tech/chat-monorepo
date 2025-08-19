@@ -5,6 +5,8 @@ printWidth: 120
 jsxSingleQuote: true
 vueIndentScriptAndStyle: true
 semi: false
+tailwindFunctions:
+  - 'tv'
 plugins:
   - "@prettier/plugin-oxc"
   - "prettier-plugin-tailwindcss"

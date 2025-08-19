@@ -1,0 +1,39 @@
+{
+  "name": "@chat-monorepo/design",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsdown"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.14.0",
+  "devDependencies": {
+    "tailwindcss": "^4.1.11",
+    "tsdown": "^0.14.1"
+  },
+  "dependencies": {
+    "tailwind-variants": "^2.1.0"
+  },
+  "publishConfig": {
+    "exports": {
+      ".": {
+        "import": "./dist/index.mjs",
+        "style": "./dist/index.css"
+      },
+      "./theme": "./dist/theme/index.mjs"
+    }
+  },
+  "main": "./dist/index.mjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
+  "exports": {
+    ".": {
+      "import": "./src/index.ts",
+      "style": "./src/index.css"
+    },
+    "./theme": "./src/theme/index.ts"
+  }
+}
