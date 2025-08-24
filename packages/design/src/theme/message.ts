@@ -16,6 +16,7 @@ const message = tv({
         base: 'max-w-(--assistant-msg-width,100%) items-start rtl:items-end',
         reasoning: 'text-(--assistant-reasoning-color)',
       },
+      system: {},
     },
   },
 })

@@ -5,7 +5,7 @@
       "path": ".",
     },
     {
-      "name": "🚀 backend",
+      "name": "🚀 @chat-monorepo/backend",
       "path": "apps/backend",
     },
     {
@@ -19,6 +19,10 @@
     {
       "name": "ai-sdk-nuxt",
       "path": "playground/ai-sdk-nuxt",
+    },
+    {
+      "name": "demo-mcp-server",
+      "path": "playground/demo-mcp-server",
     },
   ],
   "settings": {

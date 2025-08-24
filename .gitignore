@@ -25,3 +25,5 @@ logs
 
 # Turborepo
 .turbo
+
+.venv

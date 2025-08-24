@@ -10,13 +10,14 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
-    "@ai-sdk/deepseek": "^1.0.7",
+    "@ai-sdk/deepseek": "^1.0.11",
     "@ai-sdk/vue": "catalog:",
-    "@chat-monorepo/vue": "workspace:*",
+    "@chat-monorepo/backend": "workspace:*",
     "@chat-monorepo/design": "workspace:*",
-    "@nuxt/eslint": "1.8.0",
+    "@chat-monorepo/vue": "workspace:*",
     "@nuxt/ui": "^3.3.0",
     "ai": "catalog:",
+    "hono": "catalog:hono",
     "nuxt": "^4.0.3",
     "vue": "^3.5.18",
     "vue-router": "^4.5.1"

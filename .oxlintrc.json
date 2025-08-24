@@ -5,7 +5,6 @@
     "suspicious": "warn"
   },
   "rules": {
-    "unicorn/filename-case": "error",
     "default-case": "warn",
     "no-empty": "error",
     "no-empty-function": ["error", { "alllow": ["arrowFunctions"] }]

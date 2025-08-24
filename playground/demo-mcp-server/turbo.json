@@ -1,5 +1,7 @@
 {
   "$schema": "https://turbo.build/schema.json",
-  "tasks": {},
-  "ui": "tui"
+  "extends": ["//"],
+  "tasks": {
+    "dev": {}
+  }
 }
