@@ -8,7 +8,7 @@ catalog:
   '@ai-sdk/provider': ^2.0.0
   '@ai-sdk/vue': ^2.0.21
   '@modelcontextprotocol/sdk': ^1.17.3
-  ai: ^5.0.21
+  ai: 5.0.21
 
 catalogs:
   hono:

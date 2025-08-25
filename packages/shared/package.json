@@ -1,0 +1,31 @@
+{
+  "name": "@chat-monorepo/shared",
+  "version": "1.0.0",
+  "description": "",
+  "main": "./dist/index.mjs",
+  "scripts": {
+    "build": "tsdown"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.15.0",
+  "devDependencies": {
+    "ai": "catalog:",
+    "tsdown": "^0.14.1"
+  },
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./ai-sdk": "./src/ai-sdk/index.ts",
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "exports": {
+      ".": "./dist/index.mjs",
+      "./ai-sdk": "./dist/ai-sdk/index.mjs",
+      "./package.json": "./package.json"
+    }
+  }
+}

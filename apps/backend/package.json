@@ -36,6 +36,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@chat-monorepo/shared": "workspace:*",
     "@dotenvx/dotenvx": "^1.49.0",
     "@types/node": "^20.11.17",
     "typescript": "^5.8.3"

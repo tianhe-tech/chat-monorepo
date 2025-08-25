@@ -8,10 +8,12 @@ import {
   validateUIMessages,
   stepCountIs,
   type ModelMessage,
+  type UIMessage,
 } from 'ai'
 import { consola } from 'consola'
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
 import { convertMessages, type MastraMessageV2 } from '@mastra/core'
+import type { DataUIParts } from '@chat-monorepo/shared/ai-sdk'
 
 import authMiddleware from '../middlewares/auth.ts'
 import mcpManagerMiddleware from '../middlewares/mcp-manager.ts'
@@ -19,6 +21,9 @@ import { modelProviderRegistry } from '../config/index.ts'
 import { e } from '../utils/http.ts'
 import { mastra } from '../mastra/index.ts'
 import { chatbotMemory } from '../mastra/memories/chatbot.ts'
+import { titleGenerator } from '../mastra/agents/title-generator.ts'
+
+type MyUIMessage = UIMessage<never, DataUIParts>
 
 const configSchema = z.object({
   baseURL: z.string().url().optional(),
@@ -81,18 +86,19 @@ const chatApp = new Hono()
         return convertMessages(messages).to('AIV5.Model')
       }
 
-      const modelMessages = await (async function () {
+      const [modelMessages, isNewThread] = await (async function () {
+        let isNewThread = false
         // 无 threadId，非持久化聊天
         if (!threadId) {
-          return toModelMessages(uiMessages)
+          return [toModelMessages(uiMessages), isNewThread]
         }
 
         const thread = await chatbotMemory.getThreadById({
           threadId,
         })
         if (!thread) {
-          await chatbotMemory.createThread({ threadId, resourceId, saveThread: true })
-          return toModelMessages(uiMessages)
+          await chatbotMemory.createThread({ threadId, resourceId, saveThread: true, title: 'New Thread' })
+          isNewThread = true
         }
 
         await chatbotMemory.saveMessages({
@@ -104,25 +110,43 @@ const chatApp = new Hono()
           threadConfig: { lastMessages: 10, semanticRecall: true },
         })
 
-        return toModelMessages(messagesV2)
+        return [toModelMessages(messagesV2), isNewThread]
       })()
 
       return createUIMessageStreamResponse({
-        stream: createUIMessageStream({
+        stream: createUIMessageStream<MyUIMessage>({
           onError(err) {
             consola.error('Error occurred while streaming:', err)
             const message = err instanceof Error ? err.message : String(err)
             return message
           },
           async execute({ writer }) {
+            writer.write({ type: 'start' })
+
+            // await at the end
+            const titlePromise = (async function () {
+              if (!isNewThread || !threadId || uiMessages.length === 0) {
+                return
+              }
+              const title = await titleGenerator.generateTitleFromUserMessage({ message: uiMessages.at(-1)! })
+              await chatbotMemory.updateThread({ id: threadId, title, metadata: {} })
+              writer.write({
+                type: 'data-thread-title',
+                data: {
+                  title,
+                },
+                transient: true,
+              })
+            })()
+
             const webSearchMessages = await (async function () {
               if (isWebSearchEnabled === false) {
                 return []
               }
 
               const webSearchStream = await mastra.getAgent('webSearchAgent').streamVNext(modelMessages, {
-                format: 'aisdk',
                 stopWhen: stepCountIs(1),
+                format: 'aisdk',
                 outputProcessors: [
                   {
                     name: 'filter-websearch-stream',
@@ -135,27 +159,35 @@ const chatApp = new Hono()
                   },
                 ],
               })
-              writer.merge(webSearchStream.toUIMessageStream({ sendFinish: false }))
+              writer.merge(webSearchStream.toUIMessageStream({ sendFinish: false, sendStart: false }))
 
               const messages = (await webSearchStream.response).messages as ModelMessage[]
-              console.dir(messages, { depth: Infinity })
 
-              return messages
+              return messages.filter((message) => {
+                if (typeof message.content === 'string') {
+                  return false
+                }
+                return message.content.filter((part) => part.type.includes('tool')).length > 0
+              })
             })()
 
-            writer.merge(
-              streamText({
-                model,
-                messages: [...modelMessages, ...webSearchMessages],
-                abortSignal: c.req.raw.signal,
-                frequencyPenalty: config.frequencyPenalty,
-                presencePenalty: config.presencePenalty,
-                maxOutputTokens: config.maxOutputTokens,
-                temperature: config.temperature,
-                topP: config.topP,
-                topK: config.topK,
-              }).toUIMessageStream({ sendReasoning: true, sendStart: !isWebSearchEnabled }),
-            )
+            const chatbotStream = streamText({
+              model,
+              messages: [...modelMessages, ...webSearchMessages],
+              abortSignal: c.req.raw.signal,
+              frequencyPenalty: config.frequencyPenalty,
+              presencePenalty: config.presencePenalty,
+              maxOutputTokens: config.maxOutputTokens,
+              temperature: config.temperature,
+              topP: config.topP,
+              topK: config.topK,
+            })
+
+            writer.merge(chatbotStream.toUIMessageStream({ sendReasoning: true, sendStart: false, sendFinish: false }))
+
+            await titlePromise
+
+            writer.write({ type: 'finish' })
           },
           async onFinish({ messages }) {
             if (threadId) {
