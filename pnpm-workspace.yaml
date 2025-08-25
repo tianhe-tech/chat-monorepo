@@ -6,9 +6,9 @@ packages:
 catalog:
   '@ai-sdk/openai-compatible': ^1.0.11
   '@ai-sdk/provider': ^2.0.0
-  '@ai-sdk/vue': ^2.0.21
-  '@modelcontextprotocol/sdk': ^1.17.3
-  ai: 5.0.21
+  '@ai-sdk/vue': ^2.0.15
+  '@modelcontextprotocol/sdk': ^1.17.4
+  ai: ^5.0.15
 
 catalogs:
   hono:

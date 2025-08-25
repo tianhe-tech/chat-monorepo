@@ -12,6 +12,8 @@ export const env = createEnv({
   server: {
     BOCHA_API_KEY: z.string(),
     PG_CONNECTION_STRING: z.string(),
+    ONE_API_BASE_URL: z.string().url(),
+    ONE_API_API_KEY: z.string(),
     TESTING: zBoolean.optional().default('false'),
   },
 })
