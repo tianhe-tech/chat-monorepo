@@ -19,8 +19,8 @@ import authMiddleware from '../middlewares/auth.ts'
 import mcpManagerMiddleware from '../middlewares/mcp-manager.ts'
 import { modelProviderRegistry } from '../config/index.ts'
 import { e } from '../utils/http.ts'
-import { mastra } from '../mastra/index.ts'
 import { chatbotMemory } from '../mastra/memories/chatbot.ts'
+import { webSearchAgent } from '../mastra/agents/web-search.ts'
 import { titleGenerator } from '../mastra/agents/title-generator.ts'
 
 type MyUIMessage = UIMessage<never, DataUIParts>
@@ -144,7 +144,7 @@ const chatApp = new Hono()
                 return []
               }
 
-              const webSearchStream = await mastra.getAgent('webSearchAgent').streamVNext(modelMessages, {
+              const webSearchStream = await webSearchAgent.streamVNext(modelMessages, {
                 stopWhen: stepCountIs(1),
                 format: 'aisdk',
                 outputProcessors: [
