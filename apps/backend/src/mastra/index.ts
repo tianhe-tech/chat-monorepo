@@ -1,17 +1,12 @@
 import { Mastra } from '@mastra/core'
-
-import { testWorkflow } from './workflows/web-search.ts'
-import { webSearchAgent } from './agents/web-search.ts'
-
+import * as agents from './agents/index.ts'
+import * as workflows from './workflows/index.ts'
+import { pgStorage } from './storage.ts'
 
 export const mastra = new Mastra({
-  storage,
-  workflows: {
-    testWorkflow,
-  },
-  agents: {
-    webSearchAgent,
-  },
+  storage: pgStorage,
+  agents,
+  workflows,
   telemetry: {
     enabled: false,
   },

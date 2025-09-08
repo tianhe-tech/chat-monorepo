@@ -1,3 +1,1 @@
-export function helloWord() {
-  console.log('hello world')
-}
+export * from './components'

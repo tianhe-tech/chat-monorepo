@@ -1,0 +1,32 @@
+{
+  "folders": [
+    {
+      "name": "✨ th-chat",
+      "path": ".",
+    },
+    {
+      "name": "🚀 @th-chat/backend",
+      "path": "apps/backend",
+    },
+    {
+      "name": "📦 @th-chat/design",
+      "path": "packages/design",
+    },
+    {
+      "name": "📦 @th-chat/shared",
+      "path": "packages/shared",
+    },
+    {
+      "name": "📦 @th-chat/vue",
+      "path": "packages/vue",
+    },
+    {
+      "name": "demo-mcp-server",
+      "path": "playground/demo-mcp-server",
+    },
+    {
+      "name": "demo-vue",
+      "path": "playground/demo-vue",
+    },
+  ],
+}

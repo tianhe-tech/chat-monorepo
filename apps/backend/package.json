@@ -1,11 +1,12 @@
 {
-  "name": "@chat-monorepo/backend",
+  "name": "@th-chat/backend",
   "type": "module",
   "scripts": {
     "dev": "dotenvx run -- node --watch src/index.ts",
-    "mastra:dev": "dotenvx run -- mastra dev",
     "build": "tsc",
-    "start": "dotenvx run -- node dist/index.js"
+    "type-check": "tsc --noEmit",
+    "start": "dotenvx run -- node dist/index.js",
+    "mastra:dev": "dotenvx run -- mastra dev"
   },
   "exports": {
     "./client": {
@@ -18,11 +19,11 @@
     "@ai-sdk/provider": "catalog:",
     "@hono/node-server": "^1.19.0",
     "@hono/zod-validator": "^0.7.2",
-    "@mastra/core": "^0.14.1",
-    "@mastra/fastembed": "^0.10.3",
-    "@mastra/mcp": "^0.10.12",
-    "@mastra/memory": "^0.13.1",
-    "@mastra/pg": "^0.14.2",
+    "@mastra/core": "^0.16.0",
+    "@mastra/fastembed": "^0.10.5",
+    "@mastra/mcp": "^0.11.4",
+    "@mastra/memory": "^0.14.4",
+    "@mastra/pg": "^0.15.0",
     "@modelcontextprotocol/sdk": "catalog:",
     "@t3-oss/env-core": "^0.13.8",
     "ai": "catalog:",
@@ -31,13 +32,14 @@
     "go-go-try": "^6.2.0",
     "hono": "catalog:hono",
     "hookable": "^5.5.3",
-    "mastra": "^0.10.23",
+    "mastra": "^0.12.0",
     "ofetch": "^1.4.1",
-    "zod": "^3.25.76"
+    "zod": "^3.25.0"
   },
   "devDependencies": {
-    "@chat-monorepo/shared": "workspace:*",
+    "@ai-sdk/deepseek": "^1.0.15",
     "@dotenvx/dotenvx": "^1.49.0",
+    "@th-chat/shared": "workspace:*",
     "@types/node": "^20.11.17",
     "typescript": "^5.8.3"
   }

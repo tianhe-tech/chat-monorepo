@@ -1,5 +1,5 @@
 {
-  "name": "@chat-monorepo/shared",
+  "name": "@th-chat/shared",
   "version": "1.0.0",
   "description": "",
   "main": "./dist/index.mjs",
@@ -11,6 +11,7 @@
   "license": "ISC",
   "packageManager": "pnpm@10.15.0",
   "devDependencies": {
+    "@modelcontextprotocol/sdk": "catalog:",
     "ai": "catalog:",
     "tsdown": "^0.14.1"
   },

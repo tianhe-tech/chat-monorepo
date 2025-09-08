@@ -1,6 +1,8 @@
-import { Cacheable } from 'cacheable'
+import { CacheableMemory } from 'cacheable'
 
-export const mcpClientStore = new Cacheable({
+const mcpClientStore = new CacheableMemory({
   ttl: '30m',
-  cacheId: 'mcp-client',
+  useClone: false,
 })
+
+export default mcpClientStore

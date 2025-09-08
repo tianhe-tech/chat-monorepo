@@ -1,20 +1,29 @@
 {
-  "name": "@chat-monorepo/design",
+  "name": "@th-chat/design",
   "version": "1.0.0",
   "description": "",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsdown"
   },
+  "type": "module",
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "packageManager": "pnpm@10.14.0",
+  "packageManager": "pnpm@10.15.1+sha512.34e538c329b5553014ca8e8f4535997f96180a1d0f614339357449935350d924e22f8614682191264ec33d1462ac21561aff97f6bb18065351c162c7e8f6de67",
   "devDependencies": {
+    "@iconify-json/devicon": "^1.2.43",
+    "@iconify-json/vscode-icons": "^1.2.30",
     "tailwindcss": "^4.1.11",
-    "tsdown": "^0.14.1"
+    "tsdown": "^0.14.2",
+    "typescript": "^5.9.2",
+    "unplugin-icons": "^22.2.0",
+    "unplugin-vue": "^7.0.1",
+    "vite": "npm:rolldown-vite@latest",
+    "vue": "^3.5.0"
   },
   "dependencies": {
+    "reka-ui": "catalog:",
     "tailwind-variants": "^2.1.0"
   },
   "publishConfig": {
@@ -35,5 +44,8 @@
       "style": "./src/index.css"
     },
     "./theme": "./src/theme/index.ts"
+  },
+  "peerDependencies": {
+    "vue": "^3.5.0"
   }
 }

@@ -4,15 +4,15 @@ import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
 import { logger } from 'hono/logger'
 
-import mcpManagerApp from './routes/mcp-manager.ts'
+import mcpClientApp from './routes/mcp-client.ts'
 import chatApp from './routes/chat.ts'
 
 consola.wrapConsole()
 
-const app = new Hono()
+const app = new Hono().basePath('/api')
 app.use(logger(consola.debug))
 
-const routes = app.route('/mcp-manager', mcpManagerApp).route('/chat', chatApp)
+const routes = app.route('/mcp-client', mcpClientApp).route('/chat', chatApp)
 
 const server = serve(
   {

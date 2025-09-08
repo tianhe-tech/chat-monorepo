@@ -6,7 +6,7 @@ import { webSearch } from '../tools/web-search.ts'
 /**
  * 用于调用 web search 服务，为 agent 能力差的模型提供联网语境；
  */
-export const webSearchAgent = new Agent({
+const webSearchAgent = new Agent({
   name: 'web-search-agent',
   model: modelProviderRegistry.languageModel('one-api:Qwen3-235B-A22B'),
   tools: {
@@ -86,3 +86,5 @@ Analyze the user's latest message and classify into:
 \\nothink
 `,
 })
+
+export default webSearchAgent

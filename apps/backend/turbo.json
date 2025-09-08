@@ -5,10 +5,12 @@
     "dev": {
       "persistent": true,
       "with": ["demo-mcp-server#dev"],
-      "dependsOn": ["^build"]
+      "dependsOn": ["^build"],
+      "env": ["DEEPSEEK_API_KEY"]
     },
     "build": {
-      "outputs": ["dist/**"]
+      "outputs": ["dist/**"],
+      "dependsOn": ["^build"]
     }
   }
 }

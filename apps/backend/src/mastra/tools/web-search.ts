@@ -18,7 +18,6 @@ export const webSearch = createTool({
     count: z.number().int().optional().describe('Number of results (1-50, default 10)'),
   }),
   async execute({ context }) {
-    console.log('web search tool executing with context:', context)
     const { query, count, freshness } = context
     const { data } = await ofetch<{
       data: {

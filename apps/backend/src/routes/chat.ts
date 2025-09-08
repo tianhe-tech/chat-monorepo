@@ -1,29 +1,31 @@
-import { Hono } from 'hono'
+import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
+import type { DataUIParts, Tools } from '@th-chat/shared/ai-sdk'
 import { zValidator } from '@hono/zod-validator'
-import { z } from 'zod'
+import { convertMessages } from '@mastra/core/agent'
+import { type MastraMessageV2 } from '@mastra/core'
 import {
+  consumeStream,
   createUIMessageStream,
-  streamText,
   createUIMessageStreamResponse,
-  validateUIMessages,
+  getToolName,
+  isToolUIPart,
   stepCountIs,
+  streamText,
+  validateUIMessages,
   type ModelMessage,
   type UIMessage,
 } from 'ai'
 import { consola } from 'consola'
-import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
-import { convertMessages, type MastraMessageV2 } from '@mastra/core'
-import type { DataUIParts } from '@chat-monorepo/shared/ai-sdk'
-
-import authMiddleware from '../middlewares/auth.ts'
-import mcpManagerMiddleware from '../middlewares/mcp-manager.ts'
+import { Hono } from 'hono'
+import { z } from 'zod'
 import { modelProviderRegistry } from '../config/index.ts'
-import { e } from '../utils/http.ts'
+import { webSearchAgent, titleGenerator, slurmAgent } from '../mastra/agents/index.ts'
 import { chatbotMemory } from '../mastra/memories/chatbot.ts'
-import { webSearchAgent } from '../mastra/agents/web-search.ts'
-import { titleGenerator } from '../mastra/agents/title-generator.ts'
+import authMiddleware from '../middlewares/auth.ts'
+import { HTTPException } from 'hono/http-exception'
+import { slurmMcp, testTool } from '../mastra/agents/slurm.ts'
 
-type MyUIMessage = UIMessage<never, DataUIParts>
+type MyUIMessage = UIMessage<never, DataUIParts, Tools>
 
 const configSchema = z.object({
   baseURL: z.string().url().optional(),
@@ -41,7 +43,6 @@ const configSchema = z.object({
 
 const chatApp = new Hono()
   .use(authMiddleware)
-  .use(mcpManagerMiddleware)
   .post(
     '/',
     zValidator(
@@ -72,7 +73,7 @@ const chatApp = new Hono()
       })()
 
       if (model === undefined) {
-        return c.json(e('Not enough model info'), 400)
+        throw new HTTPException(400, { message: 'Not enough model info' })
       }
 
       const uiMessages = await validateUIMessages({ messages })
@@ -128,7 +129,10 @@ const chatApp = new Hono()
               if (!isNewThread || !threadId || uiMessages.length === 0) {
                 return
               }
-              const title = await titleGenerator.generateTitleFromUserMessage({ message: uiMessages.at(-1)! })
+              const title = await titleGenerator.generateTitleFromUserMessage({
+                message: uiMessages.at(-1)!,
+                tracingContext: {},
+              })
               await chatbotMemory.updateThread({ id: threadId, title, metadata: {} })
               writer.write({
                 type: 'data-thread-title',
@@ -159,7 +163,7 @@ const chatApp = new Hono()
                   },
                 ],
               })
-              writer.merge(webSearchStream.toUIMessageStream({ sendFinish: false, sendStart: false }))
+              writer.merge(webSearchStream.toUIMessageStream<MyUIMessage>({ sendFinish: false, sendStart: false }))
 
               const messages = (await webSearchStream.response).messages as ModelMessage[]
 
@@ -200,5 +204,101 @@ const chatApp = new Hono()
       })
     },
   )
+  .post(
+    '/agent',
+    zValidator(
+      'json',
+      z.object({
+        messages: z.array(z.any()),
+      }),
+    ),
+    async (c) => {
+      const messages = await validateUIMessages<MyUIMessage>({ messages: c.req.valid('json').messages })
+
+      return createUIMessageStreamResponse({
+        consumeSseStream: consumeStream,
+        stream: createUIMessageStream<MyUIMessage>({
+          onError(err) {
+            consola.error('Error occurred while streaming:', err)
+            const message = err instanceof Error ? err.message : String(err)
+            return message
+          },
+          async execute({ writer }) {
+            const lastMessage = messages.at(-1)!
+
+            const controller = new AbortController()
+
+            slurmMcp.elicitation.onRequest('slurm', async (_request) => {
+              controller.abort()
+              writer.write({ type: 'finish-step' })
+              writer.write({ type: 'abort' })
+
+              const action = (await submitSlurmJobPromise) as 'accept' | 'decline' | 'cancel'
+
+              submitSlurmJobPromise = new Promise<string>((resolve, reject) => {
+                submitSlurmJob.resolve = resolve
+                submitSlurmJob.reject = reject
+              })
+
+              return {
+                action,
+              }
+            })
+
+            //@ts-ignore
+            lastMessage.parts = await Promise.all(
+              lastMessage.parts.map(async (part) => {
+                if (!isToolUIPart(part)) {
+                  return part
+                }
+                const toolName = getToolName(part)
+                console.log(part.state)
+                if (
+                  (toolName !== 'testTool' &&
+                    //@ts-ignore
+                    toolName !== 'slurm_submit_slurm_job') ||
+                  part.state !== 'input-available'
+                ) {
+                  return part
+                }
+
+                console.log(part)
+
+                // @ts-ignore
+                const _confirm = part.input?._confirm
+                if (_confirm && toolName === 'slurm_submit_slurm_job') {
+                  submitSlurmJob.resolve(_confirm)
+                  return part
+                }
+                //@ts-ignore
+                const result = await testTool.execute?.({ context: { _confirm } })
+                writer.write({ type: 'tool-output-available', toolCallId: part.toolCallId, output: result })
+                return { ...part, state: 'output-available', output: result }
+              }),
+            )
+
+            const stream = await slurmAgent.streamVNext(messages, {
+              format: 'aisdk',
+              options: {
+                abortSignal: controller.signal,
+              },
+            })
+
+            writer.merge(stream.toUIMessageStream({ sendStart: false, sendFinish: false, sendReasoning: true }))
+          },
+        }),
+      })
+    },
+  )
+
+const submitSlurmJob: { resolve: (val: any) => void; reject: (reason?: any) => void } = {
+  resolve: () => {},
+  reject: () => {},
+}
+
+let submitSlurmJobPromise = new Promise<string>((resolve, reject) => {
+  submitSlurmJob.resolve = resolve
+  submitSlurmJob.reject = reject
+})
 
 export default chatApp

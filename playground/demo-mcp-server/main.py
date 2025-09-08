@@ -11,17 +11,23 @@ class DemoResult:
     label: str
 
 
+# @mcp.tool
+# async def i_need_user_confirm(echo: Annotated[str, 'Message to echo'], ctx: Context) -> str:
+#     """This is a tool for confirmation."""
+#     print('tool input', echo)
+#     result = await ctx.elicit('Please confirm your action.', DemoResult)
+#     if result.action == 'accept':
+#         return f'you accepted: {result.data}'
+#     elif result.action == 'decline':
+#         return 'you declined.'
+#     else:
+#         return 'cancelled'
+
+
 @mcp.tool
-async def i_need_user_confirm(echo: Annotated[str, 'Message to echo'], ctx: Context) -> str:
-    """This is a tool for confirmation."""
-    print('tool input', echo)
-    result = await ctx.elicit('Please confirm your action.', DemoResult)
-    if result.action == 'accept':
-        return f'you accepted: {result.data}'
-    elif result.action == 'decline':
-        return 'you declined.'
-    else:
-        return 'cancelled'
+async def test_empty_input() -> str:
+    """This is a tool for testing."""
+    return 'success'
 
 
 def main():

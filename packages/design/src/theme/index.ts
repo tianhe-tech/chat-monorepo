@@ -1,9 +1,5 @@
 import message from './message'
 import thread from './thread'
+import markdown from './markdown'
 
-const theme = {
-  message,
-  thread,
-}
-
-export default theme
+export { message, thread, markdown }

@@ -1,4 +1,4 @@
-# chat monorepo (working title)
+# th-chat (working title)
 
 <!-- TODO: Replace with actual repository name -->
 

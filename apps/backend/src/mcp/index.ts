@@ -1,1 +1,3 @@
-export * from './store.ts'
+import mcpClientStore from './store.ts'
+
+export { mcpClientStore }
