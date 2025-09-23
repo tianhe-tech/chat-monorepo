@@ -12,7 +12,7 @@
   }
 
   const chat = new Chat<MyUIMessage>({
-    transport: new DefaultChatTransport({ api: '/api/chat/agent' }),
+    transport: new DefaultChatTransport({ api: '/api/chat/mcp-test' }),
   })
 
   const inputValue = ref('')

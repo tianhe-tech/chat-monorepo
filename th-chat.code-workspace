@@ -9,6 +9,14 @@
       "path": "apps/backend",
     },
     {
+      "name": "🚀 @th-chat/chat",
+      "path": "apps/chat",
+    },
+    {
+      "name": "🚀 @th-chat/mcp",
+      "path": "apps/mcp",
+    },
+    {
       "name": "📦 @th-chat/design",
       "path": "packages/design",
     },
@@ -17,15 +25,19 @@
       "path": "packages/shared",
     },
     {
+      "name": "📦 @th-chat/tsconfig",
+      "path": "packages/tsconfig",
+    },
+    {
       "name": "📦 @th-chat/vue",
       "path": "packages/vue",
     },
     {
-      "name": "demo-mcp-server",
+      "name": "🍭demo-mcp-server",
       "path": "playground/demo-mcp-server",
     },
     {
-      "name": "demo-vue",
+      "name": "🍭demo-vue",
       "path": "playground/demo-vue",
     },
   ],

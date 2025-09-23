@@ -2,7 +2,8 @@
   "name": "@th-chat/shared",
   "version": "1.0.0",
   "description": "",
-  "main": "./dist/index.mjs",
+  "main": "./dist/index.js",
+  "type": "module",
   "scripts": {
     "build": "tsdown"
   },
@@ -12,21 +13,30 @@
   "packageManager": "pnpm@10.15.0",
   "devDependencies": {
     "@modelcontextprotocol/sdk": "catalog:",
+    "@types/pg": "^8.15.5",
     "ai": "catalog:",
-    "tsdown": "^0.14.1"
+    "drizzle-orm": "^0.44.5",
+    "pg": "^8.16.3",
+    "tsdown": "^0.14.1",
+    "zod": "catalog:"
   },
-  "module": "./dist/index.mjs",
-  "types": "./dist/index.d.mts",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts",
-    "./ai-sdk": "./src/ai-sdk/index.ts",
+    "./ai": "./src/ai/index.ts",
+    "./db": "./src/db/index.ts",
     "./package.json": "./package.json"
   },
   "publishConfig": {
     "exports": {
-      ".": "./dist/index.mjs",
-      "./ai-sdk": "./dist/ai-sdk/index.mjs",
+      "./ai": "./dist/ai.js",
+      "./db": "./dist/db.js",
       "./package.json": "./package.json"
     }
+  },
+  "peerDependencies": {
+    "drizzle-orm": "^0.44.5",
+    "pg": "^8.16.3",
+    "zod": "catalog:"
   }
 }

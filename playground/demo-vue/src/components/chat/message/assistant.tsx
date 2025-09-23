@@ -1,12 +1,11 @@
 import { message as messageUI } from '@th-chat/design/theme'
 import type { FunctionalComponent } from 'vue'
 
-import { injectMessageContext } from './Root.vue'
+import type { Tools } from '@th-chat/shared'
+import { type DynamicToolUIPart, type ToolUIPart, getToolOrDynamicToolName } from 'ai'
 import { ChatMarkdown } from '../markdown'
 import { injectChatContext } from '../Provider.vue'
-import type { Tools } from '@th-chat/shared'
-import { type ToolUIPart, getToolName } from 'ai'
-import type { MyUIMessage } from '@/types/ai'
+import { injectMessageContext } from './Root.vue'
 
 export const ChatMessageAssistantParts: FunctionalComponent = () => {
   const { message } = injectMessageContext()
@@ -19,29 +18,30 @@ export const ChatMessageAssistantParts: FunctionalComponent = () => {
         return <TextPart key={index} text={part.text} />
       case 'reasoning':
         return <ReasoningPart key={index} text={part.text} />
-      default:
-        if (!part.type.includes('tool')) {
-          return null
-        }
 
+      default:
+        return null
+      case 'dynamic-tool':
         if (part.state === 'input-streaming') {
           return null
         }
-
         return (
           <WithConfirmation key={index} part={part}>
             {
               {
                 default: ({ isNeedingConfirm, accept, decline }) => (
-                  <div class='bg-amber-100'>
-                    <div class='text-lg'>工具: {getToolName(part)}</div>
+                  <div class='border bg-amber-100 p-3'>
+                    <div class='text-lg'>工具: {getToolOrDynamicToolName(part)}</div>
                     {isNeedingConfirm ? (
-                      <div class='flex gap-2'>
-                        <button onClick={accept}>accept</button>
-                        <button onClick={decline}>decline</button>
-                      </div>
+                      <>
+                        <div class='whitespace-pre-wrap'>输入 {JSON.stringify(part.input, null, 2)}</div>
+                        <div class='flex gap-2'>
+                          <button onClick={accept}>accept</button>
+                          <button onClick={decline}>decline</button>
+                        </div>
+                      </>
                     ) : (
-                      JSON.stringify(part.output)
+                      <div class='whitespace-pre-wrap'>输出 {JSON.stringify(part.output, null, 2)}</div>
                     )}
                   </div>
                 ),
@@ -71,10 +71,11 @@ type WithConfirmationSlots = {
   default(props: { accept(): void; decline(): void; cancel(): void; isNeedingConfirm: boolean }): any
 }
 
-const WithConfirmation: FunctionalComponent<{ part: ToolUIPart<Tools> }, {}, WithConfirmationSlots> = (
-  { part },
-  { slots },
-) => {
+const WithConfirmation: FunctionalComponent<
+  { part: ToolUIPart<Tools> | DynamicToolUIPart },
+  {},
+  WithConfirmationSlots
+> = ({ part }, { slots }) => {
   const { chat } = injectChatContext()
 
   const isNeedingConfirm = chat.value.status === 'ready' && part.state === 'input-available'

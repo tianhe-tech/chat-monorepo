@@ -14,8 +14,8 @@ declare module 'vue' {
     ChatProvider: typeof import('./src/components/chat/Provider.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
-    UApp: typeof import('./../../node_modules/.pnpm/@nuxt+ui@3.3.2_@babel+parser@7.28.4_@netlify+blobs@9.1.2_@upstash+redis@1.35.3_axios@1._a7987237dffd33053f6a8aeb6f4058ab/node_modules/@nuxt/ui/dist/runtime/components/App.vue')['default']
-    UButton: typeof import('./../../node_modules/.pnpm/@nuxt+ui@3.3.2_@babel+parser@7.28.4_@netlify+blobs@9.1.2_@upstash+redis@1.35.3_axios@1._a7987237dffd33053f6a8aeb6f4058ab/node_modules/@nuxt/ui/dist/runtime/components/Button.vue')['default']
-    UTextarea: typeof import('./../../node_modules/.pnpm/@nuxt+ui@3.3.2_@babel+parser@7.28.4_@netlify+blobs@9.1.2_@upstash+redis@1.35.3_axios@1._a7987237dffd33053f6a8aeb6f4058ab/node_modules/@nuxt/ui/dist/runtime/components/Textarea.vue')['default']
+    UApp: typeof import('./../../node_modules/.pnpm/@nuxt+ui@3.3.2_@babel+parser@7.28.4_@netlify+blobs@9.1.2_@upstash+redis@1.35.3_axios@1._fad6828326ac67e554a48fb934721277/node_modules/@nuxt/ui/dist/runtime/components/App.vue')['default']
+    UButton: typeof import('./../../node_modules/.pnpm/@nuxt+ui@3.3.2_@babel+parser@7.28.4_@netlify+blobs@9.1.2_@upstash+redis@1.35.3_axios@1._fad6828326ac67e554a48fb934721277/node_modules/@nuxt/ui/dist/runtime/components/Button.vue')['default']
+    UTextarea: typeof import('./../../node_modules/.pnpm/@nuxt+ui@3.3.2_@babel+parser@7.28.4_@netlify+blobs@9.1.2_@upstash+redis@1.35.3_axios@1._fad6828326ac67e554a48fb934721277/node_modules/@nuxt/ui/dist/runtime/components/Textarea.vue')['default']
   }
 }

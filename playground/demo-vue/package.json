@@ -21,7 +21,6 @@
     "@ai-sdk/vue": "catalog:",
     "@crazydos/vue-markdown": "^1.1.4",
     "@nuxt/ui": "^3.3.2",
-    "@th-chat/backend": "workspace:*",
     "@th-chat/design": "workspace:*",
     "@th-chat/shared": "workspace:*",
     "@th-chat/vue": "workspace:*",

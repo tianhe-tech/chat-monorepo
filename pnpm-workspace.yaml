@@ -7,13 +7,14 @@ catalog:
   '@ai-sdk/openai-compatible': ^1.0.15
   '@ai-sdk/provider': ^2.0.0
   '@ai-sdk/vue': 2.0.28
-  '@modelcontextprotocol/sdk': 1.17.4
+  '@hono/node-server': ^1.19.3
+  '@hono/zod-validator': ^0.7.3
+  '@mastra/core': ^0.16.3
+  '@modelcontextprotocol/sdk': 1.18.1
   ai: 5.0.28
+  hono: ^4.9.7
   reka-ui: ^2.5.0
-
-catalogs:
-  hono:
-    hono: ^4.9.4
+  zod: ^4.1.9
 
 ignoredBuiltDependencies:
   - '@parcel/watcher'
@@ -24,6 +25,3 @@ onlyBuiltDependencies:
   - '@tailwindcss/oxide'
   - esbuild
   - protobufjs
-
-overrides:
-  zod: ^3.25.0

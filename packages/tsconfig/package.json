@@ -1,0 +1,17 @@
+{
+  "name": "@th-chat/tsconfig",
+  "private": "true",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "exports": {
+    "./node.tsconfig.json": "./node.tsconfig.json"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.15.0",
+  "dependencies": {
+    "@tsconfig/node22": "^22.0.2"
+  }
+}

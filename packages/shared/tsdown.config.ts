@@ -1,7 +1,10 @@
 import { defineConfig } from 'tsdown'
 
 export default defineConfig({
-  entry: ['src/index.ts', 'src/ai-sdk/index.ts'],
+  entry: {
+    ai: 'src/ai/index.ts',
+    db: 'src/db/index.ts',
+  },
   platform: 'neutral',
   dts: true,
   format: ['esm'],
