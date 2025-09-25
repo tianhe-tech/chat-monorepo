@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { MyUIMessage } from '@/types/ai'
+  import type { MyUIMessage } from '@/ai/types'
 
   const injectionKey = Symbol('ChatMessageRoot') as InjectionKey<{
     message: Readonly<Ref<MyUIMessage>>
@@ -15,7 +15,7 @@
 </script>
 
 <script setup lang="ts">
-  import { message as messageUI } from '@th-chat/design/theme'
+  import { message as messageUI } from '@repo/design/theme'
 
   const { message } = defineProps<{
     message: MyUIMessage

@@ -1,5 +1,5 @@
 @import 'tailwindcss';
 @import '@nuxt/ui';
-@import '@th-chat/design';
+@import '@repo/design';
 
-@source '../../node_modules/@th-chat/design';
+@source '../../node_modules/@repo/design';

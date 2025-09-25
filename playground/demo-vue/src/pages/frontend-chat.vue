@@ -2,15 +2,15 @@
   import { Chat } from '@ai-sdk/vue'
   import { createDeepSeek } from '@ai-sdk/deepseek'
 
-  import { buildSimpleClientOnlyTransport } from '@th-chat/vue'
-  import * as theme from '@th-chat/design/theme'
+  import { createSimpleClientOnlyTransport } from '@repo/vue'
+  import * as theme from '@repo/design/theme'
 
   const deepseekApiKey = import.meta.env.VITE_DEEPSEEK_API_KEY
 
   const provider = createDeepSeek({ apiKey: deepseekApiKey })
 
   const chat = new Chat({
-    transport: buildSimpleClientOnlyTransport(provider.languageModel('deepseek-reasoner')),
+    transport: createSimpleClientOnlyTransport(provider.languageModel('deepseek-reasoner')),
   })
 
   const input = ref('')

@@ -23,7 +23,7 @@ const streamFinishMiddleware = createMiddleware(async (c, next) => {
       emitter.emit('streamFinish')
       emitter.removeAllListeners()
     })
-    c.res = c.newResponse(ts.readable)
+    c.res = new Response(ts.readable, c.res)
   }
 })
 

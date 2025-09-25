@@ -21,7 +21,10 @@ export const threadRelations = relations(thread, ({ many }) => ({
 
 export const message = chat.table('messages', {
   id: p.text().primaryKey(),
-  threadId: p.text().references(() => thread.id, { onDelete: 'cascade' }),
+  threadId: p
+    .text()
+    .notNull()
+    .references(() => thread.id, { onDelete: 'cascade' }),
   role: roleEnum().notNull(),
   format: messageFormatEnum().notNull(),
   content: p.json().$type<MyUIMessage['parts']>().notNull(),

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { MyUIMessage } from '@/types/ai'
+  import type { MyUIMessage } from '@/ai/types'
   import type { Chat } from '@ai-sdk/vue'
 
   const injectionKey = Symbol('chat-provider') as InjectionKey<{ chat: Readonly<Ref<Chat<MyUIMessage>>> }>

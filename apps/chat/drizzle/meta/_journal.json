@@ -15,6 +15,13 @@
       "when": 1758614828912,
       "tag": "0001_calm_patriot",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1758789672297,
+      "tag": "0002_rich_stellaris",
+      "breakpoints": true
     }
   ]
 }

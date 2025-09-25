@@ -1,7 +1,7 @@
-import { message as messageUI } from '@th-chat/design/theme'
+import { message as messageUI } from '@repo/design/theme'
 import type { FunctionalComponent } from 'vue'
 
-import type { Tools } from '@th-chat/shared'
+import type { Tools } from '@repo/shared/ai'
 import { type DynamicToolUIPart, type ToolUIPart, getToolOrDynamicToolName } from 'ai'
 import { ChatMarkdown } from '../markdown'
 import { injectChatContext } from '../Provider.vue'
@@ -88,12 +88,10 @@ const WithConfirmation: FunctionalComponent<
     chat.value.sendMessage()
   }
 
-  return (
-    slots.default?.({
-      isNeedingConfirm,
-      accept: () => resubmitWith('accept'),
-      decline: () => resubmitWith('decline'),
-      cancel: () => resubmitWith('cancel'),
-    }) ?? null
-  )
+  return slots.default?.({
+    isNeedingConfirm,
+    accept: () => resubmitWith('accept'),
+    decline: () => resubmitWith('decline'),
+    cancel: () => resubmitWith('cancel'),
+  })
 }

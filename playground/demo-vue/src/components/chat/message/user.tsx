@@ -1,4 +1,4 @@
-import { message as messageUI } from '@th-chat/design/theme'
+import { message as messageUI } from '@repo/design/theme'
 import type { FunctionalComponent } from 'vue'
 
 import { injectMessageContext } from './Root.vue'

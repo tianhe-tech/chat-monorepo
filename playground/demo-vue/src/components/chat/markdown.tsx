@@ -1,6 +1,6 @@
 import { VueMarkdown, type SanitizeOptions, type TVueMarkdown } from '@crazydos/vue-markdown'
-import { MarkdownTableWrapper } from '@th-chat/design'
-import { markdown as markdownUI } from '@th-chat/design/theme'
+import { MarkdownTableWrapper } from '@repo/design'
+import { markdown as markdownUI } from '@repo/design/theme'
 import rehypeKatex from 'rehype-katex'
 import remarkGfm from 'remark-gfm'
 import remarkMath from 'remark-math'

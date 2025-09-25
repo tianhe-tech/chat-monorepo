@@ -1,6 +1,6 @@
 import { streamText, convertToModelMessages, type UIMessage, type ChatTransport, type LanguageModel } from 'ai'
 
-export function buildSimpleClientOnlyTransport<TMessage extends UIMessage>(model: LanguageModel) {
+export function createSimpleClientOnlyTransport<TMessage extends UIMessage>(model: LanguageModel) {
   return new (class SimpleClientOnlyTransport implements ChatTransport<TMessage> {
     async sendMessages(options: Parameters<ChatTransport<TMessage>['sendMessages']>[0]) {
       const modelMessages = convertToModelMessages(options.messages)

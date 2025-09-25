@@ -34,6 +34,7 @@ import * as dbSchema from '../db/schema'
 import { env } from '../env'
 import mcpMiddleware from '../middlewares/mcp'
 import streamFinishMiddleware from '../middlewares/stream-finish'
+import { inspect } from 'node:util'
 
 const model = createDeepSeek().languageModel('deepseek-chat')
 
@@ -56,9 +57,8 @@ const chatApp = new Hono().post(
   mcpMiddleware,
   async (c) => {
     const user = c.get('user')
-    const logger = consola.withTag(`Chat App ${user.id}:${user.scope}`)
-
     const body = c.req.valid('json')
+    const logger = consola.withTag(`Chat App ${body.threadId}`)
 
     const [validationErr, validatedMessages] = await goTryRaw(
       validateUIMessages<MyUIMessage>({
@@ -119,18 +119,13 @@ const chatApp = new Hono().post(
       // lift up for readability
       async function thisIsReturn() {
         logger.debug('Saving new message to db...')
-        const [err] = await goTryRaw(() =>
-          lastMessageUpdated
-            ? db
-                .update(dbSchema.message)
-                .set({ content: inputMessage.parts })
-                .where(eq(dbSchema.message.id, inputMessage.id))
-            : db.insert(dbSchema.message).values({
-                id: inputMessage.id,
-                content: inputMessage.parts,
-                format: 'ai_v5',
-                role: inputMessage.role as any,
-              }),
+        const [err] = await goTryRaw(
+          () =>
+            lastMessageUpdated &&
+            db
+              .update(dbSchema.message)
+              .set({ content: inputMessage.parts })
+              .where(eq(dbSchema.message.id, inputMessage.id)),
         )
 
         if (err) {
@@ -242,25 +237,26 @@ const chatApp = new Hono().post(
     const abortController = new AbortController()
     const signal = AbortSignal.any([c.req.raw.signal, abortController.signal])
 
-    const [err, mcpTools] = await goTryRaw(async () => {
+    const mcpTools = await (async () => {
       logger.debug('Fetching tools from MCP service...')
-      const toolDefs = await ofetch<Record<string, MCPTool[]>>('/tools', {
-        baseURL: env.MCP_SERVICE_URL,
-        signal,
-        headers: {
-          'mcp-thread-id': threadId,
-        },
-      })
+      const [err, toolDefs = {}] = await goTryRaw(
+        ofetch<Record<string, MCPTool[]>>('/tools', {
+          baseURL: env.MCP_SERVICE_URL,
+          signal,
+          headers: {
+            'mcp-thread-id': threadId,
+          },
+        }),
+      )
+
+      if (err) {
+        logger.error('Failed to fetch tools from MCP service', err)
+      }
 
       return Object.entries(toolDefs)
         .flatMap(([serverName, tools]) => tools.map((tool) => ({ ...tool, name: `${serverName}_${tool.name}` })))
         .map(convertMCPToolToAITool)
-    })
-
-    if (err) {
-      logger.error('Failed to fetch tools from MCP service', err)
-      throw new HTTPException(500)
-    }
+    })()
 
     const { setupMCPEventHandlers } = c.get('mcpContext')
 
@@ -276,9 +272,21 @@ const chatApp = new Hono().post(
       setupMCPEventHandlers()
       const uiMessages = await processMessages()
 
+      logger.box(
+        inspect(
+          {
+            uiMessages,
+          },
+          { depth: Infinity },
+        ),
+      )
+
       return createUIMessageStreamResponse({
+        headers: {
+          'Content-Type': 'text/event-stream',
+        },
         stream: createUIMessageStream<MyUIMessage>({
-          originalMessages: uiMessages,
+          originalMessages: [inputMessage],
           onError(err) {
             logger.error('Error occurred while streaming:', err)
             const message = err instanceof Error ? err.message : String(err)
@@ -297,6 +305,27 @@ const chatApp = new Hono().post(
             })
 
             writer.merge(stream.toUIMessageStream({ sendStart: false, sendFinish: false }))
+          },
+          async onFinish({ messages }) {
+            logger.debug('Saving assistant message to db...', inspect({ messages }, { depth: Infinity }))
+            const [err] = await goTryRaw(
+              Promise.all(
+                messages.map(async (message) => {
+                  await db.insert(dbSchema.message).values({
+                    id: message.id,
+                    content: message.parts,
+                    threadId,
+                    format: 'ai_v5',
+                    role: message.role as any,
+                  })
+                }),
+              ),
+            )
+            if (err) {
+              logger.error(formatDBErrorMessage(err))
+              throw err
+            }
+            logger.debug('Saved assistant message to db successfully')
           },
         }),
       })
