@@ -10,7 +10,7 @@
     "build": "tsdown",
     "type-check": "tsc --noEmit",
     "start": "dotenvx run -- node dist/index.js",
-    "test": "vitest",
+    "test": "dotenvx run -- vitest",
     "db:generate": "dotenvx run -- drizzle-kit generate",
     "db:migrate": "dotenvx run -- drizzle-kit migrate",
     "db:push": "dotenvx run -- drizzle-kit push",
@@ -53,6 +53,7 @@
     "tsdown": "^0.15.2",
     "tsx": "^4.20.5",
     "typescript": "^5.9.2",
+    "uuid": "^13.0.0",
     "vitest": "catalog:test"
   },
   "exports": {

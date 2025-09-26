@@ -41,4 +41,5 @@ process.on('SIGTERM', () => {
   })
 })
 
+export default app
 export type AppType = typeof app
