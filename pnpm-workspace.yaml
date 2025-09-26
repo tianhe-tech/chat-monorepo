@@ -16,6 +16,12 @@ catalog:
   reka-ui: ^2.5.0
   zod: ^4.1.9
 
+catalogs:
+  test:
+    '@testcontainers/postgresql': ^11.6.0
+    '@testcontainers/valkey': ^11.6.0
+    vitest: ^3.2.4
+
 ignoredBuiltDependencies:
   - '@parcel/watcher'
   - onnxruntime-node
@@ -23,5 +29,7 @@ ignoredBuiltDependencies:
 
 onlyBuiltDependencies:
   - '@tailwindcss/oxide'
+  - cpu-features
   - esbuild
   - protobufjs
+  - ssh2

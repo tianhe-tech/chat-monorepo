@@ -6,6 +6,9 @@
   },
   "rules": {
     "default-case": "warn",
-    "no-empty": "error"
+    "no-empty": "error",
+    "no-disabled-tests": "off",
+    "expect-expect": "off",
+    "valid-title": "off"
   }
 }
