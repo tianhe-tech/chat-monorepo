@@ -1,20 +1,11 @@
 import { serve } from '@hono/node-server'
 import { consola } from 'consola'
 import { gracefulExit } from 'exit-hook'
-import { Hono } from 'hono'
-import { logger } from 'hono/logger'
 import { env } from './env'
-import configsApp from './routes/configs'
-import authMiddleware from './middlewares/auth'
-import toolsApp from './routes/tools'
+import app from './routes'
 
 consola.wrapConsole()
 consola.options.formatOptions.colors = true
-
-const app = new Hono()
-  .use(logger(consola.debug), authMiddleware)
-  .route('/configs', configsApp)
-  .route('/tools', toolsApp)
 
 const server = serve(
   {
@@ -40,6 +31,3 @@ process.on('SIGTERM', () => {
     gracefulExit(0)
   })
 })
-
-export default app
-export type AppType = typeof app
