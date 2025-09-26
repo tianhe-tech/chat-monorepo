@@ -20,6 +20,7 @@ beforeAll(async () => {
   app = (await import('../../src/routes')).default
 
   consola.wrapAll()
+  consola.pauseLogs()
 })
 
 beforeEach(() => {

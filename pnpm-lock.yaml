@@ -227,6 +227,9 @@ importers:
       '@repo/shared':
         specifier: workspace:@th-chat/shared@*
         version: link:../../packages/shared
+      '@repo/test-utils':
+        specifier: workspace:@th-chat/test-utils@*
+        version: link:../../packages/test-utils
       '@repo/tsconfig':
         specifier: workspace:@th-chat/tsconfig@*
         version: link:../../packages/tsconfig
@@ -322,6 +325,8 @@ importers:
         specifier: 'catalog:'
         version: 4.1.9
 
+  packages/test-utils: {}
+
   packages/tsconfig:
     dependencies:
       '@tsconfig/node22':
@@ -346,8 +351,6 @@ importers:
       vue-tsc:
         specifier: ^3.0.5
         version: 3.0.5(typescript@5.9.2)
-
-  playground/demo-mcp-server: {}
 
   playground/demo-vue:
     dependencies:

@@ -4,15 +4,12 @@ import { ValkeyContainer, type StartedValkeyContainer } from '@testcontainers/va
 import { GlideClient, GlideClientConfiguration } from '@valkey/valkey-glide'
 import { consola } from 'consola'
 import { migrate } from 'drizzle-orm/node-postgres/migrator'
-import { spawn } from 'node:child_process'
-import { createConnection } from 'node:net'
 import { resolve } from 'node:path'
-import { setTimeout as delay } from 'node:timers/promises'
 import { v4 as uuid } from 'uuid'
 import { afterAll, beforeAll, beforeEach, describe, expect, test, vi, type Mock } from 'vitest'
 import * as schema from '../../src/db/schema'
 import { MCPMessageChannels } from '../../src/mcp'
-import exitHook from 'exit-hook'
+import { spinUpFixtureMCPServer } from '@repo/test-utils'
 
 let pgContainer: StartedPostgreSqlContainer
 let valkeyContainer: StartedValkeyContainer
@@ -31,6 +28,7 @@ beforeAll(async () => {
   app = (await import('../../src/routes')).default
 
   consola.wrapAll()
+  consola.pauseLogs()
 })
 
 beforeEach(() => {
@@ -51,72 +49,16 @@ beforeEach(async () => {
   await db.delete(schema.mcpServerConfig)
 })
 
-let server: ReturnType<typeof spawn>
-let tearDownServer: () => void
+let cleanupMCPServer: () => void
 const MCP_SERVER_PORT = 8765
-const MCP_SERVER_HOST = '127.0.0.1'
-
-async function waitForPortReady(port: number, host: string, timeoutMs = 10_000) {
-  const startedAt = Date.now()
-  while (Date.now() - startedAt < timeoutMs) {
-    try {
-      await new Promise<void>((resolve, reject) => {
-        const socket = createConnection({ port, host }, () => {
-          socket.end()
-          resolve()
-        })
-        socket.on('error', (error) => {
-          socket.destroy()
-          reject(error)
-        })
-      })
-      return
-    } catch {
-      await delay(100)
-    }
-  }
-  throw new Error(`Timed out waiting for ${host}:${port} to become ready`)
-}
 
 beforeAll(async () => {
-  const path = '/mcp'
-
-  vi.stubEnv('TRUSTED_MCP_ORIGINS', JSON.stringify([`http://${MCP_SERVER_HOST}:${MCP_SERVER_PORT}`]))
-
-  server = spawn('uv', ['run', 'mcp-server'], {
-    cwd: resolve(import.meta.dirname, '../fixtures/mcp-server'),
-    env: {
-      ...process.env,
-      MCP_SERVER_PORT: String(MCP_SERVER_PORT),
-      MCP_SERVER_HOST: MCP_SERVER_HOST,
-      MCP_SERVER_PATH: path,
-    },
-  })
-
-  server.stdout?.pipe(process.stdout)
-  server.stderr?.pipe(process.stderr)
-
-  server.on('error', (err) => {
-    console.error('Failed to start subprocess.', err)
-  })
-
-  server.on('exit', (code, signal) => {
-    console.error(`Subprocess exited with code ${code} and signal ${signal}`)
-  })
-
-  tearDownServer = () => {
-    if (server && !server.killed) {
-      server.kill('SIGINT')
-    }
-  }
-
-  exitHook(tearDownServer)
-
-  await waitForPortReady(MCP_SERVER_PORT, MCP_SERVER_HOST)
+  const { teardown } = await spinUpFixtureMCPServer({ port: MCP_SERVER_PORT })
+  cleanupMCPServer = teardown
 })
 
 afterAll(() => {
-  tearDownServer()
+  cleanupMCPServer()
 })
 
 let valkeySub: GlideClient
@@ -146,7 +88,7 @@ beforeEach(() => {
 })
 
 const serverName = 'fixture'
-const serverBaseUrl = `http://${MCP_SERVER_HOST}:${MCP_SERVER_PORT}`
+const serverBaseUrl = `http://localhost:${MCP_SERVER_PORT}`
 
 beforeEach(async () => {
   await db.delete(schema.mcpServerConfig)

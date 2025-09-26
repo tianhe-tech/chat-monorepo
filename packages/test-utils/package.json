@@ -1,0 +1,13 @@
+{
+  "name": "@th-chat/test-utils",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "private": true,
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

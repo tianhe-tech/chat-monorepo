@@ -45,6 +45,7 @@
     "@dotenvx/dotenvx": "^1.49.0",
     "@repo/shared": "workspace:@th-chat/shared@*",
     "@repo/tsconfig": "workspace:@th-chat/tsconfig@*",
+    "@repo/test-utils": "workspace:@th-chat/test-utils@*",
     "@testcontainers/postgresql": "catalog:test",
     "@testcontainers/valkey": "catalog:test",
     "@types/node": "^24.5.2",
