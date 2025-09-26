@@ -2,43 +2,35 @@
   "folders": [
     {
       "name": "✨ th-chat",
-      "path": ".",
-    },
-    {
-      "name": "🚀 @th-chat/backend",
-      "path": "apps/backend",
+      "path": "."
     },
     {
       "name": "🚀 @th-chat/chat",
-      "path": "apps/chat",
+      "path": "apps/chat"
     },
     {
       "name": "🚀 @th-chat/mcp",
-      "path": "apps/mcp",
+      "path": "apps/mcp"
     },
     {
       "name": "📦 @th-chat/design",
-      "path": "packages/design",
+      "path": "packages/design"
     },
     {
       "name": "📦 @th-chat/shared",
-      "path": "packages/shared",
+      "path": "packages/shared"
     },
     {
       "name": "📦 @th-chat/tsconfig",
-      "path": "packages/tsconfig",
+      "path": "packages/tsconfig"
     },
     {
       "name": "📦 @th-chat/vue",
-      "path": "packages/vue",
+      "path": "packages/vue"
     },
     {
-      "name": "🍭demo-mcp-server",
-      "path": "playground/demo-mcp-server",
-    },
-    {
-      "name": "🍭demo-vue",
-      "path": "playground/demo-vue",
-    },
+      "name": "🍭@playground/demo-vue",
+      "path": "playground/demo-vue"
+    }
   ],
 }

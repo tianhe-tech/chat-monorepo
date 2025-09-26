@@ -1,10 +1,17 @@
+import type { CallToolResult, TextContent } from '@modelcontextprotocol/sdk/types.js'
 import { PostgreSqlContainer, type StartedPostgreSqlContainer } from '@testcontainers/postgresql'
 import { ValkeyContainer, type StartedValkeyContainer } from '@testcontainers/valkey'
-import { v4 as uuid } from 'uuid'
-import { afterAll, beforeAll, beforeEach, describe, expect, test } from 'vitest'
-import * as schema from '../src/db/schema'
+import { GlideClient, GlideClientConfiguration } from '@valkey/valkey-glide'
+import { consola } from 'consola'
 import { migrate } from 'drizzle-orm/node-postgres/migrator'
+import { spawn } from 'node:child_process'
+import { createConnection } from 'node:net'
 import { resolve } from 'node:path'
+import { setTimeout as delay } from 'node:timers/promises'
+import { v4 as uuid } from 'uuid'
+import { afterAll, beforeAll, beforeEach, describe, expect, test, vi, type Mock } from 'vitest'
+import * as schema from '../src/db/schema'
+import { MCPMessageChannels } from '../src/mcp'
 
 let pgContainer: StartedPostgreSqlContainer
 let valkeyContainer: StartedValkeyContainer
@@ -16,11 +23,18 @@ beforeAll(async () => {
   valkeyContainer = await new ValkeyContainer('valkey/valkey').start()
 
   process.env.PG_CONNECTION_STRING = pgContainer.getConnectionUri()
-  process.env.VALKEY_ADDRESSES = JSON.stringify([valkeyContainer.getHost()])
+  process.env.VALKEY_ADDRESSES = JSON.stringify([`${valkeyContainer.getHost()}:${valkeyContainer.getPort()}`])
+  process.env.TRUSTED_MCP_ORIGINS = JSON.stringify(['http://127.0.0.1:8765'])
 
   db = (await import('../src/db')).db
   await migrate(db, { migrationsFolder: resolve(import.meta.dirname, '../drizzle') })
   app = (await import('../src/index')).default
+
+  consola.wrapAll()
+})
+
+beforeEach(() => {
+  consola.mockTypes(() => vi.fn())
 })
 
 afterAll(() =>
@@ -332,6 +346,219 @@ describe('/configs', () => {
       const clientId = uuid()
       const res = await requestDelete({ clientId, ids: [1, 2] })
       expect(res).toMatchObject({ status: 404 })
+    })
+  })
+})
+
+describe('/tools', () => {
+  let server: ReturnType<typeof spawn>
+  let cleanup: () => void
+  const exitHandlers: Array<{ event: NodeJS.Signals | 'exit'; handler: () => void }> = []
+
+  async function waitForPortReady(port: number, host: string, timeoutMs = 10_000) {
+    const startedAt = Date.now()
+    while (Date.now() - startedAt < timeoutMs) {
+      try {
+        await new Promise<void>((resolve, reject) => {
+          const socket = createConnection({ port, host }, () => {
+            socket.end()
+            resolve()
+          })
+          socket.on('error', (error) => {
+            socket.destroy()
+            reject(error)
+          })
+        })
+        return
+      } catch {
+        await delay(100)
+      }
+    }
+    throw new Error(`Timed out waiting for ${host}:${port} to become ready`)
+  }
+
+  beforeAll(async () => {
+    const port = 8765
+    const host = '127.0.0.1'
+    const path = '/mcp'
+
+    server = spawn('uv', ['run', 'mcp-server'], {
+      cwd: resolve(import.meta.dirname, 'fixtures/mcp-server'),
+      env: {
+        ...process.env,
+        MCP_SERVER_PORT: String(port),
+        MCP_SERVER_HOST: host,
+        MCP_SERVER_PATH: path,
+      },
+    })
+
+    server.stdout?.pipe(process.stdout)
+    server.stderr?.pipe(process.stderr)
+
+    server.on('error', (err) => {
+      console.error('Failed to start subprocess.', err)
+    })
+
+    server.on('exit', (code, signal) => {
+      console.error(`Subprocess exited with code ${code} and signal ${signal}`)
+    })
+
+    cleanup = () => {
+      if (server && !server.killed) {
+        server.kill('SIGINT')
+      }
+    }
+
+    const onExit = () => cleanup()
+    const onSigint = () => {
+      cleanup()
+      process.exit(130)
+    }
+    const onSigterm = () => {
+      cleanup()
+      process.exit(143)
+    }
+
+    process.on('exit', onExit)
+    process.on('SIGINT', onSigint)
+    process.on('SIGTERM', onSigterm)
+    exitHandlers.push({ event: 'exit', handler: onExit })
+    exitHandlers.push({ event: 'SIGINT', handler: onSigint })
+    exitHandlers.push({ event: 'SIGTERM', handler: onSigterm })
+
+    await waitForPortReady(port, host)
+  })
+
+  afterAll(() => {
+    cleanup()
+    for (const { event, handler } of exitHandlers) {
+      process.off(event, handler)
+    }
+  })
+
+  let valkeySub: GlideClient
+  const valkeySubLogger = consola.withTag('valkey-sub')
+
+  beforeAll(async () => {
+    valkeySubLogger.mockTypes(() => vi.fn())
+    valkeySub = await GlideClient.createClient({
+      addresses: [{ host: valkeyContainer.getHost(), port: valkeyContainer.getPort() }],
+      pubsubSubscriptions: {
+        channelsAndPatterns: {
+          [GlideClientConfiguration.PubSubChannelModes.Exact]: new Set(Object.values(MCPMessageChannels)),
+        },
+        callback: ({ channel, message }) => {
+          console.log({ channel: channel.toString(), message: message.toString() })
+        },
+      },
+    })
+  })
+
+  afterAll(() => {
+    valkeySub.close()
+  })
+
+  beforeEach(() => {
+    valkeySubLogger.mockTypes(() => vi.fn())
+  })
+
+  const serverName = 'fixture'
+  const baseUrl = 'http://127.0.0.1:8765'
+
+  beforeEach(async () => {
+    await db.delete(schema.mcpServerConfig)
+    await db.insert(schema.mcpServerConfig).values({
+      name: serverName,
+      url: `${baseUrl}/mcp`,
+      transport: 'streamable_http',
+      userId: 'default',
+      scope: 'global',
+    })
+  })
+
+  function requestListTools({ threadId, refresh = false }: { threadId: string; refresh?: boolean }) {
+    const search = refresh ? '?refresh=true' : ''
+    return app.request(`/tools${search}`, {
+      method: 'get',
+      headers: {
+        'mcp-thread-id': threadId,
+      },
+    })
+  }
+
+  function requestCallTool({
+    threadId,
+    name,
+    args,
+  }: {
+    threadId: string
+    name: string
+    args?: Record<string, unknown>
+  }) {
+    return app.request('/tools', {
+      method: 'post',
+      headers: {
+        'content-type': 'application/json',
+        'mcp-thread-id': threadId,
+      },
+      body: JSON.stringify({
+        name,
+        arguments: args,
+      }),
+    })
+  }
+
+  test('list tools', async () => {
+    const threadId = uuid()
+    const res = await requestListTools({ threadId, refresh: true })
+    expect(res.status).toBe(200)
+    const toolMap = (await res.json()) as Record<string, Array<{ name: string }>>
+    expect(toolMap).toHaveProperty(serverName)
+    const serverTools = toolMap[serverName]
+    expect(Array.isArray(serverTools)).toBe(true)
+    expect(serverTools.length).toBeGreaterThan(0)
+  })
+
+  describe('call tools', () => {
+    describe('basic', () => {
+      test('calls the echo tool and gets a response', async () => {
+        const threadId = uuid()
+
+        const listRes = await requestListTools({ threadId, refresh: true })
+        expect(listRes.status).toBe(200)
+        const toolMap = (await listRes.json()) as Record<string, Array<{ name: string }>>
+        expect(toolMap).toHaveProperty(serverName)
+        const serverTools = toolMap[serverName]
+        expect(Array.isArray(serverTools)).toBe(true)
+        const echoTool = serverTools.find((tool) => tool.name === 'echo')
+        expect(echoTool).toBeDefined()
+
+        const callRes = await requestCallTool({
+          threadId,
+          name: `${serverName}_echo`,
+          args: { text: 'ping' },
+        })
+        expect(callRes.status).toBe(200)
+        const res = (await callRes.json()) as CallToolResult
+
+        expect(res.content).toMatchObject([{ type: 'text', text: 'ping' } as TextContent])
+      })
+    })
+
+    test('calls the echo tool and listen on channel', async () => {
+      const threadId = uuid()
+      const callRes = await requestCallTool({
+        threadId,
+        name: `${serverName}_echo`,
+        args: { text: 'ping via channel' },
+      })
+      expect(callRes.status).toBe(200)
+      const res = (await callRes.json()) as CallToolResult
+      expect(res.content).toMatchObject([{ type: 'text', text: 'ping via channel' } as TextContent])
+
+      const fn = valkeySubLogger.log as unknown as Mock
+      const consolaMessage = fn.mock.calls
+      expect(JSON.stringify(consolaMessage)).toContain('ping via channel')
     })
   })
 })

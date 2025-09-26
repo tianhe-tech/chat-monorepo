@@ -1,5 +1,5 @@
 {
-  "name": "demo-vue",
+  "name": "@playground/demo-vue",
   "version": "0.0.0",
   "private": true,
   "type": "module",
