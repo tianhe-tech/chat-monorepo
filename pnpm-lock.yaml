@@ -3,6 +3,7 @@ lockfileVersion: '9.0'
 settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
+  injectWorkspacePackages: true
 
 catalogs:
   default:
@@ -12,9 +13,12 @@ catalogs:
     '@ai-sdk/vue':
       specifier: 2.0.28
       version: 2.0.28
+    '@dotenvx/dotenvx':
+      specifier: 1.51.0
+      version: 1.51.0
     '@hono/node-server':
-      specifier: ^1.19.3
-      version: 1.19.3
+      specifier: ^1.19.4
+      version: 1.19.4
     '@hono/zod-validator':
       specifier: ^0.7.3
       version: 0.7.3
@@ -89,7 +93,7 @@ importers:
         version: 1.17.4
       '@repo/mcp':
         specifier: workspace:@th-chat/mcp@*
-        version: link:../mcp
+        version: '@th-chat/mcp@file:apps/mcp(@neondatabase/serverless@1.0.1)(@opentelemetry/api@1.9.0)(@types/pg@8.15.5)(@upstash/redis@1.35.3)(postgres@3.4.7)(typescript@5.9.2)'
       '@repo/shared':
         specifier: workspace:@th-chat/shared@*
         version: link:../../packages/shared
@@ -177,10 +181,10 @@ importers:
     dependencies:
       '@hono/node-server':
         specifier: 'catalog:'
-        version: 1.19.3(hono@4.9.8)
+        version: 1.19.4(hono@4.9.9)
       '@hono/zod-validator':
         specifier: 'catalog:'
-        version: 0.7.3(hono@4.9.8)(zod@4.1.9)
+        version: 0.7.3(hono@4.9.9)(zod@4.1.9)
       '@isaacs/ttlcache':
         specifier: ^1.4.1
         version: 1.4.1
@@ -215,8 +219,8 @@ importers:
         specifier: ^6.2.0
         version: 6.2.0
       hono:
-        specifier: ^4.9.8
-        version: 4.9.8
+        specifier: ^4.9.9
+        version: 4.9.9
       ioredis:
         specifier: ^5.7.0
         version: 5.7.0
@@ -231,8 +235,8 @@ importers:
         version: zod@3.25.76
     devDependencies:
       '@dotenvx/dotenvx':
-        specifier: ^1.49.0
-        version: 1.49.0
+        specifier: 'catalog:'
+        version: 1.51.0
       '@repo/shared':
         specifier: workspace:@th-chat/shared@*
         version: link:../../packages/shared
@@ -282,6 +286,9 @@ importers:
         specifier: ^2.1.0
         version: 2.1.0(tailwind-merge@3.3.1)(tailwindcss@4.1.11)
     devDependencies:
+      '@dotenvx/dotenvx':
+        specifier: 'catalog:'
+        version: 1.51.0
       '@iconify-json/devicon':
         specifier: ^1.2.43
         version: 1.2.43
@@ -312,6 +319,9 @@ importers:
 
   packages/shared:
     devDependencies:
+      '@dotenvx/dotenvx':
+        specifier: 'catalog:'
+        version: 1.51.0
       '@modelcontextprotocol/sdk':
         specifier: 'catalog:'
         version: 1.17.4
@@ -339,6 +349,9 @@ importers:
       '@ai-sdk/provider':
         specifier: 'catalog:'
         version: 2.0.0
+      '@dotenvx/dotenvx':
+        specifier: 'catalog:'
+        version: 1.51.0
       ai:
         specifier: 'catalog:'
         version: 5.0.28(zod@4.1.9)
@@ -348,6 +361,10 @@ importers:
       '@tsconfig/node22':
         specifier: ^22.0.2
         version: 22.0.2
+    devDependencies:
+      '@dotenvx/dotenvx':
+        specifier: 'catalog:'
+        version: 1.51.0
 
   packages/vue:
     dependencies:
@@ -358,6 +375,9 @@ importers:
       '@ai-sdk/vue':
         specifier: 'catalog:'
         version: 2.0.28(vue@3.5.20(typescript@5.9.2))(zod@4.1.9)
+      '@dotenvx/dotenvx':
+        specifier: 'catalog:'
+        version: 1.51.0
       tsdown:
         specifier: ^0.14.1
         version: 0.14.1(typescript@5.9.2)(vue-tsc@3.0.5(typescript@5.9.2))
@@ -384,13 +404,13 @@ importers:
         version: 3.3.2(@babel/parser@7.28.4)(@netlify/blobs@9.1.2)(@upstash/redis@1.35.3)(axios@1.12.2)(change-case@5.4.4)(db0@0.3.2(drizzle-orm@0.44.5(@neondatabase/serverless@1.0.1)(@opentelemetry/api@1.9.0)(@types/pg@8.15.5)(@upstash/redis@1.35.3)(pg@8.16.3)(postgres@3.4.7)))(embla-carousel@8.6.0)(ioredis@5.7.0)(jwt-decode@4.0.0)(magicast@0.3.5)(rolldown-vite@7.1.13(@types/node@22.18.0)(esbuild@0.25.9)(jiti@2.5.1)(terser@5.43.1)(tsx@4.20.5)(yaml@2.8.1))(typescript@5.8.3)(vue-router@4.5.1(vue@3.5.18(typescript@5.8.3)))(vue@3.5.18(typescript@5.8.3))(zod@3.25.76)
       '@repo/design':
         specifier: workspace:@th-chat/design@*
-        version: link:../../packages/design
+        version: '@th-chat/design@file:packages/design(tailwind-merge@3.3.1)(tailwindcss@4.1.12)(typescript@5.8.3)(vue@3.5.18(typescript@5.8.3))'
       '@repo/shared':
         specifier: workspace:@th-chat/shared@*
-        version: link:../../packages/shared
+        version: '@th-chat/shared@file:packages/shared(drizzle-orm@0.44.5(@neondatabase/serverless@1.0.1)(@opentelemetry/api@1.9.0)(@types/pg@8.15.5)(@upstash/redis@1.35.3)(pg@8.16.3)(postgres@3.4.7))(pg@8.16.3)(zod@3.25.76)'
       '@repo/vue':
         specifier: workspace:@th-chat/vue@*
-        version: link:../../packages/vue
+        version: '@th-chat/vue@file:packages/vue(@ai-sdk/vue@2.0.28(vue@3.5.18(typescript@5.8.3))(zod@3.25.76))(zod@3.25.76)'
       '@vueuse/core':
         specifier: ^13.8.0
         version: 13.8.0(vue@3.5.18(typescript@5.8.3))
@@ -425,6 +445,9 @@ importers:
         specifier: ^3.25.0
         version: 3.25.76
     devDependencies:
+      '@dotenvx/dotenvx':
+        specifier: 'catalog:'
+        version: 1.51.0
       '@modelcontextprotocol/sdk':
         specifier: 'catalog:'
         version: 1.17.4
@@ -730,6 +753,10 @@ packages:
 
   '@dotenvx/dotenvx@1.49.0':
     resolution: {integrity: sha512-M1cyP6YstFQCjih54SAxCqHLMMi8QqV8tenpgGE48RTXWD7vfMYJiw/6xcCDpS2h28AcLpTsFCZA863Ge9yxzA==}
+    hasBin: true
+
+  '@dotenvx/dotenvx@1.51.0':
+    resolution: {integrity: sha512-CbMGzyOYSyFF7d4uaeYwO9gpSBzLTnMmSmTVpCZjvpJFV69qYbjYPpzNnCz1mb2wIvEhjWjRwQWuBzTO0jITww==}
     hasBin: true
 
   '@drizzle-team/brocli@0.10.2':
@@ -1128,6 +1155,12 @@ packages:
     peerDependencies:
       hono: ^4
 
+  '@hono/node-server@1.19.4':
+    resolution: {integrity: sha512-AWKQZ/YkHUBSHeL/5Ld8FWgUs6wFf4TxGYxqp9wLZxRdFuHBpXmgOq+CuDoL4vllkZLzovCf5HBJnypiy3EtHA==}
+    engines: {node: '>=18.14.1'}
+    peerDependencies:
+      hono: ^4
+
   '@hono/zod-validator@0.7.3':
     resolution: {integrity: sha512-uYGdgVib3RlGD698WR5dVM0zB3UuPY5vHKXffGUbUh7r4xY+mFIhF3/v4AcQVLrU5CQdBso8BJr4wuVoCrjTuQ==}
     peerDependencies:
@@ -1222,6 +1255,10 @@ packages:
 
   '@modelcontextprotocol/sdk@1.17.4':
     resolution: {integrity: sha512-zq24hfuAmmlNZvik0FLI58uE5sriN0WWsQzIlYnzSuKDAHFqJtBFrl/LfB1NLgJT5Y7dEBzaX4yAKqOPrcetaw==}
+    engines: {node: '>=18'}
+
+  '@modelcontextprotocol/sdk@1.18.1':
+    resolution: {integrity: sha512-d//GE8/Yh7aC3e7p+kZG8JqqEAwwDUmAfvH1quogtbk+ksS6E0RR6toKKESPYYZVre0meqkJb27zb+dhqE9Sgw==}
     engines: {node: '>=18'}
 
   '@msgpackr-extract/msgpackr-extract-darwin-arm64@3.0.3':
@@ -2004,6 +2041,26 @@ packages:
 
   '@testcontainers/valkey@11.6.0':
     resolution: {integrity: sha512-JKJxAwBiGAXNg+UlZmH6xfo/djuxB2M88OYaii6tYUvC9KSrUQZtYWbkDDFoJRpRpgQ0tW1o7LOWcT17Qk1T3w==}
+
+  '@th-chat/design@file:packages/design':
+    resolution: {directory: packages/design, type: directory}
+    peerDependencies:
+      vue: ^3.5.0
+
+  '@th-chat/mcp@file:apps/mcp':
+    resolution: {directory: apps/mcp, type: directory}
+
+  '@th-chat/shared@file:packages/shared':
+    resolution: {directory: packages/shared, type: directory}
+    peerDependencies:
+      drizzle-orm: ^0.44.5
+      pg: ^8.16.3
+      zod: 'catalog:'
+
+  '@th-chat/vue@file:packages/vue':
+    resolution: {directory: packages/vue, type: directory}
+    peerDependencies:
+      '@ai-sdk/vue': 'catalog:'
 
   '@tsconfig/node22@22.0.2':
     resolution: {integrity: sha512-Kmwj4u8sDRDrMYRoN9FDEcXD8UpBSaPQQ24Gz+Gamqfm7xxn+GBR7ge/Z7pK8OXNGyUzbSwJj+TH6B+DS/epyA==}
@@ -3656,6 +3713,10 @@ packages:
 
   hono@4.9.8:
     resolution: {integrity: sha512-JW8Bb4RFWD9iOKxg5PbUarBYGM99IcxFl2FPBo2gSJO11jjUDqlP1Bmfyqt8Z/dGhIQ63PMA9LdcLefXyIasyg==}
+    engines: {node: '>=16.9.0'}
+
+  hono@4.9.9:
+    resolution: {integrity: sha512-Hxw4wT6zjJGZJdkJzAx9PyBdf7ZpxaTSA0NfxqjLghwMrLBX8p33hJBzoETRakF3UJu6OdNQBZAlNSkGqKFukw==}
     engines: {node: '>=16.9.0'}
 
   hookable@5.5.3:
@@ -6291,6 +6352,18 @@ snapshots:
       picomatch: 4.0.3
       which: 4.0.0
 
+  '@dotenvx/dotenvx@1.51.0':
+    dependencies:
+      commander: 11.1.0
+      dotenv: 17.2.2
+      eciesjs: 0.4.15
+      execa: 5.1.1
+      fdir: 6.5.0(picomatch@4.0.3)
+      ignore: 5.3.2
+      object-treeify: 1.1.33
+      picomatch: 4.0.3
+      which: 4.0.0
+
   '@drizzle-team/brocli@0.10.2': {}
 
   '@ecies/ciphers@0.2.4(@noble/ciphers@1.3.0)':
@@ -6582,9 +6655,22 @@ snapshots:
     dependencies:
       hono: 4.9.8
 
+  '@hono/node-server@1.19.3(hono@4.9.9)':
+    dependencies:
+      hono: 4.9.9
+
+  '@hono/node-server@1.19.4(hono@4.9.9)':
+    dependencies:
+      hono: 4.9.9
+
   '@hono/zod-validator@0.7.3(hono@4.9.8)(zod@4.1.9)':
     dependencies:
       hono: 4.9.8
+      zod: 4.1.9
+
+  '@hono/zod-validator@0.7.3(hono@4.9.9)(zod@4.1.9)':
+    dependencies:
+      hono: 4.9.9
       zod: 4.1.9
 
   '@humanfs/core@0.19.1': {}
@@ -6691,6 +6777,23 @@ snapshots:
   '@js-sdsl/ordered-map@4.4.2': {}
 
   '@modelcontextprotocol/sdk@1.17.4':
+    dependencies:
+      ajv: 6.12.6
+      content-type: 1.0.5
+      cors: 2.8.5
+      cross-spawn: 7.0.6
+      eventsource: 3.0.7
+      eventsource-parser: 3.0.6
+      express: 5.1.0
+      express-rate-limit: 7.5.1(express@5.1.0)
+      pkce-challenge: 5.0.0
+      raw-body: 3.0.1
+      zod: 3.25.76
+      zod-to-json-schema: 3.24.6(zod@3.25.76)
+    transitivePeerDependencies:
+      - supports-color
+
+  '@modelcontextprotocol/sdk@1.18.1':
     dependencies:
       ajv: 6.12.6
       content-type: 1.0.5
@@ -7459,6 +7562,85 @@ snapshots:
       - bare-buffer
       - react-native-b4a
       - supports-color
+
+  '@th-chat/design@file:packages/design(tailwind-merge@3.3.1)(tailwindcss@4.1.12)(typescript@5.8.3)(vue@3.5.18(typescript@5.8.3))':
+    dependencies:
+      reka-ui: 2.5.0(typescript@5.8.3)(vue@3.5.18(typescript@5.8.3))
+      tailwind-variants: 2.1.0(tailwind-merge@3.3.1)(tailwindcss@4.1.12)
+      vue: 3.5.18(typescript@5.8.3)
+    transitivePeerDependencies:
+      - '@vue/composition-api'
+      - tailwind-merge
+      - tailwindcss
+      - typescript
+
+  '@th-chat/mcp@file:apps/mcp(@neondatabase/serverless@1.0.1)(@opentelemetry/api@1.9.0)(@types/pg@8.15.5)(@upstash/redis@1.35.3)(postgres@3.4.7)(typescript@5.9.2)':
+    dependencies:
+      '@hono/node-server': 1.19.3(hono@4.9.9)
+      '@hono/zod-validator': 0.7.3(hono@4.9.9)(zod@4.1.9)
+      '@isaacs/ttlcache': 1.4.1
+      '@modelcontextprotocol/sdk': 1.18.1
+      '@t3-oss/env-core': 0.13.8(typescript@5.9.2)(zod@4.1.9)
+      '@valkey/valkey-glide': 2.1.0
+      ai: 5.0.28(zod@4.1.9)
+      bullmq: 5.58.5
+      consola: 3.4.2
+      destr: 2.0.5
+      drizzle-orm: 0.44.5(@neondatabase/serverless@1.0.1)(@opentelemetry/api@1.9.0)(@types/pg@8.15.5)(@upstash/redis@1.35.3)(pg@8.16.3)(postgres@3.4.7)
+      exit-hook: 4.0.0
+      go-go-try: 6.2.0
+      hono: 4.9.9
+      ioredis: 5.7.0
+      pg: 8.16.3
+      zod: 4.1.9
+      zodv3: zod@3.25.76
+    transitivePeerDependencies:
+      - '@aws-sdk/client-rds-data'
+      - '@cloudflare/workers-types'
+      - '@electric-sql/pglite'
+      - '@libsql/client'
+      - '@libsql/client-wasm'
+      - '@neondatabase/serverless'
+      - '@op-engineering/op-sqlite'
+      - '@opentelemetry/api'
+      - '@planetscale/database'
+      - '@prisma/client'
+      - '@tidbcloud/serverless'
+      - '@types/better-sqlite3'
+      - '@types/pg'
+      - '@types/sql.js'
+      - '@upstash/redis'
+      - '@vercel/postgres'
+      - '@xata.io/client'
+      - arktype
+      - better-sqlite3
+      - bun-types
+      - expo-sqlite
+      - gel
+      - knex
+      - kysely
+      - mysql2
+      - pg-native
+      - postgres
+      - prisma
+      - sql.js
+      - sqlite3
+      - supports-color
+      - typescript
+      - valibot
+
+  '@th-chat/shared@file:packages/shared(drizzle-orm@0.44.5(@neondatabase/serverless@1.0.1)(@opentelemetry/api@1.9.0)(@types/pg@8.15.5)(@upstash/redis@1.35.3)(pg@8.16.3)(postgres@3.4.7))(pg@8.16.3)(zod@3.25.76)':
+    dependencies:
+      drizzle-orm: 0.44.5(@neondatabase/serverless@1.0.1)(@opentelemetry/api@1.9.0)(@types/pg@8.15.5)(@upstash/redis@1.35.3)(pg@8.16.3)(postgres@3.4.7)
+      pg: 8.16.3
+      zod: 3.25.76
+
+  '@th-chat/vue@file:packages/vue(@ai-sdk/vue@2.0.28(vue@3.5.18(typescript@5.8.3))(zod@3.25.76))(zod@3.25.76)':
+    dependencies:
+      '@ai-sdk/vue': 2.0.28(vue@3.5.18(typescript@5.8.3))(zod@3.25.76)
+      ai: 5.0.28(zod@3.25.76)
+    transitivePeerDependencies:
+      - zod
 
   '@tsconfig/node22@22.0.2': {}
 
@@ -9368,6 +9550,8 @@ snapshots:
 
   hono@4.9.8: {}
 
+  hono@4.9.9: {}
+
   hookable@5.5.3: {}
 
   html-void-elements@3.0.0: {}
@@ -10598,6 +10782,23 @@ snapshots:
       - '@vue/composition-api'
       - typescript
 
+  reka-ui@2.5.0(typescript@5.8.3)(vue@3.5.18(typescript@5.8.3)):
+    dependencies:
+      '@floating-ui/dom': 1.7.4
+      '@floating-ui/vue': 1.1.9(vue@3.5.18(typescript@5.8.3))
+      '@internationalized/date': 3.9.0
+      '@internationalized/number': 3.6.5
+      '@tanstack/vue-virtual': 3.13.12(vue@3.5.18(typescript@5.8.3))
+      '@vueuse/core': 12.8.2(typescript@5.8.3)
+      '@vueuse/shared': 12.8.2(typescript@5.8.3)
+      aria-hidden: 1.2.6
+      defu: 6.1.4
+      ohash: 2.0.11
+      vue: 3.5.18(typescript@5.8.3)
+    transitivePeerDependencies:
+      - '@vue/composition-api'
+      - typescript
+
   reka-ui@2.5.0(typescript@5.9.2)(vue@3.5.20(typescript@5.9.2)):
     dependencies:
       '@floating-ui/dom': 1.7.4
@@ -11028,6 +11229,12 @@ snapshots:
   tailwind-variants@2.1.0(tailwind-merge@3.3.1)(tailwindcss@4.1.11):
     dependencies:
       tailwindcss: 4.1.11
+    optionalDependencies:
+      tailwind-merge: 3.3.1
+
+  tailwind-variants@2.1.0(tailwind-merge@3.3.1)(tailwindcss@4.1.12):
+    dependencies:
+      tailwindcss: 4.1.12
     optionalDependencies:
       tailwind-merge: 3.3.1
 

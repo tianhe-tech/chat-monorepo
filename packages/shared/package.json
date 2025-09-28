@@ -12,6 +12,7 @@
   "license": "ISC",
   "packageManager": "pnpm@10.15.0",
   "devDependencies": {
+    "@dotenvx/dotenvx": "catalog:",
     "@modelcontextprotocol/sdk": "catalog:",
     "@types/pg": "^8.15.5",
     "ai": "catalog:",

@@ -37,6 +37,7 @@
     "zod": "^3.25.0"
   },
   "devDependencies": {
+    "@dotenvx/dotenvx": "catalog:",
     "@modelcontextprotocol/sdk": "catalog:",
     "@tailwindcss/vite": "^4.1.12",
     "@tsconfig/node22": "^22.0.2",

@@ -12,6 +12,7 @@
   },
   "devDependencies": {
     "@ai-sdk/provider": "catalog:",
+    "@dotenvx/dotenvx": "catalog:",
     "ai": "catalog:"
   },
   "peerDependencies": {
