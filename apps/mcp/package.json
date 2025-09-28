@@ -11,7 +11,7 @@
     "dev": "dotenvx run -- tsx --watch src/index.ts",
     "build": "tsdown",
     "type-check": "tsc --noEmit",
-    "start": "dotenvx run -- node dist/index.js",
+    "start": "dotenvx --ignore=MISSING_ENV_FILE run -- node dist/index.js",
     "test": "dotenvx run -- vitest run",
     "test:dev": "dotenvx run -- vitest",
     "db:generate": "dotenvx run -- drizzle-kit generate",
@@ -33,14 +33,12 @@
     "@t3-oss/env-core": "^0.13.8",
     "@valkey/valkey-glide": "^2.1.0",
     "ai": "catalog:",
-    "bullmq": "^5.58.5",
     "consola": "^3.4.2",
     "destr": "^2.0.5",
     "drizzle-orm": "^0.44.5",
     "exit-hook": "^4.0.0",
     "go-go-try": "^6.2.0",
     "hono": "^4.9.9",
-    "ioredis": "^5.7.0",
     "pg": "^8.16.3",
     "zod": "catalog:",
     "zodv3": "npm:zod@^3.25.76"
@@ -53,9 +51,9 @@
     "@testcontainers/valkey": "catalog:test",
     "@types/node": "^24.5.2",
     "@types/pg": "^8.15.5",
-    "drizzle-kit": "^0.31.4",
     "tsdown": "^0.15.2",
     "tsx": "^4.20.5",
+    "drizzle-kit": "^0.31.4",
     "typescript": "^5.9.2",
     "uuid": "^13.0.0",
     "vitest": "catalog:test"
@@ -78,5 +76,6 @@
     }
   },
   "module": "./dist/index.js",
-  "types": "./dist/index.d.ts"
+  "types": "./dist/index.d.ts",
+  "main": "./dist/index.js"
 }

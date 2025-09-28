@@ -11,6 +11,7 @@ export default defineConfig({
   exports: {
     devExports: true,
   },
+  format: ['esm'],
   dts: true,
   tsconfig: true,
 })

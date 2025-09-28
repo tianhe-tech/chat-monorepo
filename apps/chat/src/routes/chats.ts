@@ -20,6 +20,7 @@ import { consola } from 'consola'
 import { eq } from 'drizzle-orm'
 import { goTryRaw } from 'go-go-try'
 import { Hono } from 'hono'
+import { hc } from 'hono/client'
 import { HTTPException } from 'hono/http-exception'
 import assert from 'node:assert'
 import { AsyncLocalStorage } from 'node:async_hooks'
@@ -34,8 +35,10 @@ import * as dbSchema from '../db/schema'
 import { env } from '../env'
 import mcpMiddleware from '../middlewares/mcp'
 import streamFinishMiddleware from '../middlewares/stream-finish'
+import type mcpApp from '@repo/mcp/routes'
 
 const model = createDeepSeek().languageModel('deepseek-chat')
+
 
 const dataPartSchemas = {
   'aborted-tool': abortedToolDataSchema,

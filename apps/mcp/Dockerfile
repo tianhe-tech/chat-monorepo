@@ -1,20 +1,21 @@
-FROM node:22-slim AS build-base
+FROM node:22-slim AS base
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
-RUN corepack enable pnpm && corepack install -g pnpm@latest
+RUN npm install -g pnpm@latest
 
-FROM build-base AS builder
+FROM base AS builder
 WORKDIR /app
 COPY . .
-RUN pnpm --filter ./apps/mcp... fetch
-RUN pnpm --filter ./apps/mcp... install --offline --frozen-lockfile
+RUN pnpm config set --location project --json injectWorkspacePackages true
+RUN pnpm --filter ./apps/mcp... install --no-frozen-lockfile
 RUN pnpm --filter ./apps/mcp... run build
+RUN pnpm --filter ./apps/mcp... deploy --prod out
 
-FROM builder AS pruned
+FROM base AS runner
 WORKDIR /app
-RUN pnpm --filter ./apps/mcp... --prod deploy out
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 hono
+USER hono
+COPY --from=builder --chown=hono:nodejs /app/out .
 
-FROM node:22-alpine AS runner
-WORKDIR /app
-COPY --from=pruned /app/out .
-CMD ["./node_modules/.bin/dotenvx", "run", "--", "node", "dist/index.js"]
+# CMD [ "pnpm", "start" ]
