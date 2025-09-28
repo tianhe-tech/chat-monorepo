@@ -7,7 +7,7 @@ catalog:
   '@ai-sdk/openai-compatible': ^1.0.15
   '@ai-sdk/provider': 2.0.0
   '@ai-sdk/vue': 2.0.28
-  '@dotenvx/dotenvx': 1.51.0
+  '@dotenvx/dotenvx': 'catalog:'
   '@hono/node-server': ^1.19.4
   '@hono/zod-validator': ^0.7.3
   '@mastra/core': ^0.16.3

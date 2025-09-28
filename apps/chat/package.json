@@ -25,6 +25,7 @@
   "packageManager": "pnpm@10.15.0",
   "dependencies": {
     "@ai-sdk/ui-utils": "^1.2.11",
+    "@dotenvx/dotenvx": "catalog:",
     "@hono/node-server": "catalog:",
     "@hono/zod-validator": "catalog:",
     "@modelcontextprotocol/sdk": "catalog:",
@@ -47,7 +48,6 @@
   "devDependencies": {
     "@ai-sdk/deepseek": "^1.0.15",
     "@ai-sdk/provider": "catalog:",
-    "@dotenvx/dotenvx": "^1.49.0",
     "@repo/tsconfig": "workspace:@th-chat/tsconfig@*",
     "@testcontainers/postgresql": "catalog:test",
     "@testcontainers/valkey": "catalog:test",

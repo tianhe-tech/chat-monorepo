@@ -20,6 +20,7 @@
     "@ai-sdk/deepseek": "^1.0.15",
     "@ai-sdk/vue": "catalog:",
     "@crazydos/vue-markdown": "^1.1.4",
+    "@dotenvx/dotenvx": "catalog:",
     "@nuxt/ui": "^3.3.2",
     "@repo/design": "workspace:@th-chat/design@*",
     "@repo/shared": "workspace:@th-chat/shared@*",
@@ -37,7 +38,6 @@
     "zod": "^3.25.0"
   },
   "devDependencies": {
-    "@dotenvx/dotenvx": "catalog:",
     "@modelcontextprotocol/sdk": "catalog:",
     "@tailwindcss/vite": "^4.1.12",
     "@tsconfig/node22": "^22.0.2",
