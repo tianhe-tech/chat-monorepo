@@ -11,4 +11,3 @@ const app = new Hono()
   .route('/tools', toolsApp)
 
 export default app
-export type AppType = typeof app

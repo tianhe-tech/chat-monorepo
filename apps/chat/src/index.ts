@@ -2,15 +2,10 @@ import { serve } from '@hono/node-server'
 import { consola } from 'consola'
 import { gracefulExit } from 'exit-hook'
 import { env } from './env'
-import chatApp from './routes/chat'
-import { Hono } from 'hono'
-import authMiddleware from './middlewares/auth'
-import { logger } from 'hono/logger'
+import app from './routes'
 
 consola.wrapConsole()
 consola.options.formatOptions.colors = true
-
-const app = new Hono().use(logger(consola.debug), authMiddleware).route('/chat', chatApp)
 
 const server = serve(
   {

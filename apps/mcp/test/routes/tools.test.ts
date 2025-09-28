@@ -16,12 +16,12 @@ import { afterAll, beforeAll, beforeEach, describe, expect, test, vi, type Mock 
 import * as schema from '../../src/db/schema'
 import { MCPMessageChannels } from '../../src/mcp'
 import { testClient } from 'hono/testing'
-import type { AppType } from '../../src/routes'
+import type honoApp from '../../src/routes'
 
 let pgContainer: StartedPostgreSqlContainer
 let valkeyContainer: StartedValkeyContainer
 let db: typeof import('../../src/db').db
-let testApp: ReturnType<typeof testClient<AppType>>
+let testApp: ReturnType<typeof testClient<typeof honoApp>>
 
 beforeAll(async () => {
   pgContainer = await new PostgreSqlContainer('postgres').start()

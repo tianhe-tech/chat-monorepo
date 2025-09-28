@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "type": "module",
   "description": "",
-  "main": "index.js",
+  "main": "./dist/index.js",
   "scripts": {
     "dev": "dotenvx run -- tsx --watch src/index.ts",
     "build": "tsdown",
@@ -59,31 +59,22 @@
     "vitest": "catalog:test"
   },
   "exports": {
-    ".": {
-      "import": "./src/index.ts"
-    },
-    "./mcp": {
-      "import": "./src/mcp/index.ts"
-    },
-    "./routes": {
-      "import": "./src/routes/index.ts"
-    }
+    ".": "./src/index.ts",
+    "./db/schema": "./src/db/schema.ts",
+    "./mcp": "./src/mcp/index.ts",
+    "./routes": "./src/routes/index.ts",
+    "./package.json": "./package.json"
   },
   "publishConfig": {
     "access": "public",
     "exports": {
-      ".": {
-        "import": "./dist/index.js",
-        "types": "./dist/index.d.ts"
-      },
-      "./mcp": {
-        "import": "./dist/mcp/index.js",
-        "types": "./dist/mcp/index.d.ts"
-      },
-      "./routes": {
-        "import": "./dist/routes/index.js",
-        "types": "./dist/routes/index.d.ts"
-      }
+      ".": "./dist/index.js",
+      "./db/schema": "./dist/db/schema.js",
+      "./mcp": "./dist/mcp.js",
+      "./routes": "./dist/routes.js",
+      "./package.json": "./package.json"
     }
-  }
+  },
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts"
 }

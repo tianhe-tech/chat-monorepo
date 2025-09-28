@@ -1,17 +1,17 @@
 import { PostgreSqlContainer, type StartedPostgreSqlContainer } from '@testcontainers/postgresql'
 import { consola } from 'consola'
 import { migrate } from 'drizzle-orm/node-postgres/migrator'
+import { testClient } from 'hono/testing'
 import { resolve } from 'node:path'
+import { inspect } from 'node:util'
 import { v4 as uuid } from 'uuid'
 import { afterAll, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest'
-import { testClient } from 'hono/testing'
 import * as schema from '../../src/db/schema'
-import type { AppType } from '../../src/routes'
-import { inspect } from 'node:util'
+import type honoApp from '../../src/routes'
 
 let pgContainer: StartedPostgreSqlContainer
 let db: typeof import('../../src/db').db
-let testApp: ReturnType<typeof testClient<AppType>>
+let testApp: ReturnType<typeof testClient<typeof honoApp>>
 
 beforeAll(async () => {
   pgContainer = await new PostgreSqlContainer('postgres').start()

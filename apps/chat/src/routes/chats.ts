@@ -7,6 +7,7 @@ import {
   threadTitleDataSchema,
   type ToolConfirmInput,
 } from '@repo/shared/ai'
+import { formatDBErrorMessage } from '@repo/shared/db'
 import {
   convertToModelMessages,
   createUIMessageStream,
@@ -15,8 +16,6 @@ import {
   streamText,
   validateUIMessages,
 } from 'ai'
-
-import { formatDBErrorMessage } from '@repo/shared/db'
 import { consola } from 'consola'
 import { eq } from 'drizzle-orm'
 import { goTryRaw } from 'go-go-try'
@@ -24,6 +23,7 @@ import { Hono } from 'hono'
 import { HTTPException } from 'hono/http-exception'
 import assert from 'node:assert'
 import { AsyncLocalStorage } from 'node:async_hooks'
+import { inspect } from 'node:util'
 import { ofetch } from 'ofetch'
 import { z } from 'zod'
 import { convertMCPToolToAITool } from '../ai/tool'
@@ -34,7 +34,6 @@ import * as dbSchema from '../db/schema'
 import { env } from '../env'
 import mcpMiddleware from '../middlewares/mcp'
 import streamFinishMiddleware from '../middlewares/stream-finish'
-import { inspect } from 'node:util'
 
 const model = createDeepSeek().languageModel('deepseek-chat')
 
