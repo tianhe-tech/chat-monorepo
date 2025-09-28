@@ -38,7 +38,7 @@
     "drizzle-orm": "^0.44.5",
     "exit-hook": "^4.0.0",
     "go-go-try": "^6.2.0",
-    "hono": "^4.9.9",
+    "hono": "catalog:",
     "pg": "^8.16.3",
     "zod": "catalog:",
     "zodv3": "npm:zod@^3.25.76"

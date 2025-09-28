@@ -39,6 +39,7 @@ import type mcpApp from '@repo/mcp/routes'
 
 const model = createDeepSeek().languageModel('deepseek-chat')
 
+const mcpClient = hc<typeof mcpApp>(env.MCP_SERVICE_URL)
 
 const dataPartSchemas = {
   'aborted-tool': abortedToolDataSchema,
