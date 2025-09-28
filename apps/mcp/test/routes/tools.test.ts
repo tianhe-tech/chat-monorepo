@@ -1,4 +1,10 @@
-import type { CallToolResult, TextContent } from '@modelcontextprotocol/sdk/types.js'
+import {
+  type CallToolResult,
+  type CreateMessageResult,
+  type ElicitResult,
+  type TextContent,
+} from '@modelcontextprotocol/sdk/types.js'
+import { spinUpFixtureMCPServer } from '@repo/test-utils'
 import { PostgreSqlContainer, type StartedPostgreSqlContainer } from '@testcontainers/postgresql'
 import { ValkeyContainer, type StartedValkeyContainer } from '@testcontainers/valkey'
 import { GlideClient, GlideClientConfiguration } from '@valkey/valkey-glide'
@@ -9,7 +15,6 @@ import { v4 as uuid } from 'uuid'
 import { afterAll, beforeAll, beforeEach, describe, expect, test, vi, type Mock } from 'vitest'
 import * as schema from '../../src/db/schema'
 import { MCPMessageChannels } from '../../src/mcp'
-import { spinUpFixtureMCPServer } from '@repo/test-utils'
 
 let pgContainer: StartedPostgreSqlContainer
 let valkeyContainer: StartedValkeyContainer
@@ -137,23 +142,37 @@ test('list tools', async () => {
 })
 
 describe('call tools', () => {
+  async function fetchServerTools(threadId: string) {
+    const listRes = await requestListTools({ threadId, refresh: true })
+    expect(listRes.status).toBe(200)
+    const toolMap = (await listRes.json()) as Record<string, Array<{ name: string }>>
+    expect(toolMap).toHaveProperty(serverName)
+    const serverTools = toolMap[serverName]
+    expect(Array.isArray(serverTools)).toBe(true)
+    return serverTools
+  }
+
+  async function expectToolAvailable(threadId: string, toolName: string) {
+    const serverTools = await fetchServerTools(threadId)
+    const tool = serverTools.find((candidate) => candidate.name === toolName)
+    expect(tool).toBeDefined()
+    return tool
+  }
+
   let subLoggerMock: Mock
+  const getSubLoggerMessage = () => JSON.stringify(subLoggerMock.mock.calls)
   beforeEach(() => {
     subLoggerMock = valkeySubLogger.log as unknown as Mock
   })
 
-  describe('basic', () => {
-    test('http response and valkey channel', async () => {
+  describe('basic tool call', () => {
+    test('fixture mcp server has echo tool', async () => {
       const threadId = uuid()
+      await expectToolAvailable(threadId, 'echo')
+    })
 
-      const listRes = await requestListTools({ threadId, refresh: true })
-      expect(listRes.status).toBe(200)
-      const toolMap = (await listRes.json()) as Record<string, Array<{ name: string }>>
-      expect(toolMap).toHaveProperty(serverName)
-      const serverTools = toolMap[serverName]
-      expect(Array.isArray(serverTools)).toBe(true)
-      const echoTool = serverTools.find((tool) => tool.name === 'echo')
-      expect(echoTool).toBeDefined()
+    test('returns echo response', async () => {
+      const threadId = uuid()
 
       const callRes = await requestCallTool({
         threadId,
@@ -166,9 +185,198 @@ describe('call tools', () => {
       expect(res.content).toMatchObject([{ type: 'text', text: 'ping' } as TextContent])
 
       await expect.poll(() => subLoggerMock, { interval: 100, timeout: 1000 }).toHaveBeenCalledOnce()
-      const subMessage = JSON.stringify(subLoggerMock.mock.calls)
+      const subMessage = getSubLoggerMessage()
       expect(subMessage).toContain(MCPMessageChannels.ToolCallResult)
       expect(subMessage).toContain('ping')
+    })
+  })
+
+  describe('sampling', () => {
+    test('fixture mcp server has sampling tool', async () => {
+      const threadId = uuid()
+      await expectToolAvailable(threadId, 'sampling')
+    })
+
+    test('returns sampling result', async () => {
+      const threadId = uuid()
+
+      const pubConn = await GlideClient.createClient({
+        addresses: [{ host: valkeyContainer.getHost(), port: valkeyContainer.getPort() }],
+      })
+      using _disposer = {
+        [Symbol.dispose]() {
+          pubConn.close()
+        },
+      }
+
+      const callPromise = requestCallTool({
+        threadId,
+        name: `${serverName}_sampling`,
+        args: { prompt: 'Call to sampling tool' },
+      })
+
+      await expect.poll(() => subLoggerMock, { interval: 100, timeout: 5000 }).toHaveBeenCalledOnce()
+      const samplingMessage = getSubLoggerMessage()
+      expect(samplingMessage).toContain(MCPMessageChannels.SamplingRequest)
+      expect(samplingMessage).toContain('Call to sampling tool')
+
+      await pubConn.publish(
+        JSON.stringify({
+          model: 'test-model',
+          role: 'assistant',
+          content: { type: 'text', text: 'Sampling Result' },
+          threadId,
+        } as CreateMessageResult),
+        MCPMessageChannels.SamplingResult,
+      )
+
+      await expect.poll(() => subLoggerMock, { interval: 100, timeout: 1000 }).toHaveBeenCalledTimes(3)
+
+      const res = await callPromise
+      expect(JSON.stringify(await res.json())).toContain('Sampling Result')
+
+      const toolCallMessage = getSubLoggerMessage()
+      expect(toolCallMessage).toContain(MCPMessageChannels.ToolCallResult)
+      expect(toolCallMessage).toContain('Sampling Result')
+    })
+  })
+
+  describe('elicitation', () => {
+    test('fixture mcp server has elicitation tool', async () => {
+      const threadId = uuid()
+
+      expectToolAvailable(threadId, 'elicitation')
+    })
+
+    test('accept', async () => {
+      const threadId = uuid()
+
+      const pubConn = await GlideClient.createClient({
+        addresses: [{ host: valkeyContainer.getHost(), port: valkeyContainer.getPort() }],
+      })
+      using _disposer = {
+        [Symbol.dispose]() {
+          pubConn.close()
+        },
+      }
+
+      const callPromise = requestCallTool({
+        threadId,
+        name: `${serverName}_elicitation`,
+        args: { topic: 'Call to elicitation tool' },
+      })
+
+      await expect.poll(() => subLoggerMock, { interval: 100, timeout: 1000 }).toHaveBeenCalledOnce()
+      const elicitationMessage = getSubLoggerMessage()
+      expect(elicitationMessage).toContain(MCPMessageChannels.ElicitationRequest)
+      expect(elicitationMessage).toContain('Call to elicitation tool')
+
+      await pubConn.publish(
+        JSON.stringify({
+          action: 'accept',
+          threadId,
+          content: {
+            preferred_option: 'option_a',
+            rationale: 'test',
+          },
+        } as ElicitResult),
+        MCPMessageChannels.ElicitationResult,
+      )
+
+      await expect.poll(() => subLoggerMock, { interval: 100, timeout: 1000 }).toHaveBeenCalledTimes(3)
+
+      const res = await (await callPromise).json()
+      expect(JSON.stringify(res)).toContain('accept')
+      expect(JSON.stringify(res)).toContain('option_a')
+      expect(JSON.stringify(res)).toContain('test')
+
+      const toolCallMessage = getSubLoggerMessage()
+      expect(toolCallMessage).toContain(MCPMessageChannels.ToolCallResult)
+      expect(toolCallMessage).toContain('accept')
+      expect(toolCallMessage).toContain('option_a')
+      expect(toolCallMessage).toContain('test')
+    })
+
+    test('decline', async () => {
+      const threadId = uuid()
+
+      const pubConn = await GlideClient.createClient({
+        addresses: [{ host: valkeyContainer.getHost(), port: valkeyContainer.getPort() }],
+      })
+      using _disposer = {
+        [Symbol.dispose]() {
+          pubConn.close()
+        },
+      }
+
+      const callPromise = requestCallTool({
+        threadId,
+        name: `${serverName}_elicitation`,
+        args: { topic: 'Call to elicitation tool' },
+      })
+
+      await expect.poll(() => subLoggerMock, { interval: 100, timeout: 1000 }).toHaveBeenCalledOnce()
+      const elicitationMessage = getSubLoggerMessage()
+      expect(elicitationMessage).toContain(MCPMessageChannels.ElicitationRequest)
+      expect(elicitationMessage).toContain('Call to elicitation tool')
+
+      await pubConn.publish(
+        JSON.stringify({
+          action: 'decline',
+          threadId,
+        } as ElicitResult),
+        MCPMessageChannels.ElicitationResult,
+      )
+
+      await expect.poll(() => subLoggerMock, { interval: 100, timeout: 1000 }).toHaveBeenCalledTimes(3)
+
+      const res = await (await callPromise).json()
+      expect(JSON.stringify(res)).toContain('decline')
+
+      const toolCallMessage = getSubLoggerMessage()
+      expect(toolCallMessage).toContain(MCPMessageChannels.ToolCallResult)
+      expect(toolCallMessage).toContain('decline')
+    })
+
+    test('cancel', async () => {
+      const threadId = uuid()
+
+      const pubConn = await GlideClient.createClient({
+        addresses: [{ host: valkeyContainer.getHost(), port: valkeyContainer.getPort() }],
+      })
+      using _disposer = {
+        [Symbol.dispose]() {
+          pubConn.close()
+        },
+      }
+
+      const callPromise = requestCallTool({
+        threadId,
+        name: `${serverName}_elicitation`,
+        args: { topic: 'Call to elicitation tool' },
+      })
+
+      await expect.poll(() => subLoggerMock, { interval: 100, timeout: 1000 }).toHaveBeenCalledOnce()
+      const elicitationMessage = getSubLoggerMessage()
+      expect(elicitationMessage).toContain(MCPMessageChannels.ElicitationRequest)
+      expect(elicitationMessage).toContain('Call to elicitation tool')
+
+      await pubConn.publish(
+        JSON.stringify({
+          action: 'cancel',
+          threadId,
+        } as ElicitResult),
+        MCPMessageChannels.ElicitationResult,
+      )
+
+      await expect.poll(() => subLoggerMock, { interval: 100, timeout: 1000 }).toHaveBeenCalledTimes(3)
+
+      const res = await (await callPromise).json()
+      expect(JSON.stringify(res)).toContain('cancel')
+
+      const toolCallMessage = getSubLoggerMessage()
+      expect(toolCallMessage).toContain(MCPMessageChannels.ToolCallResult)
+      expect(toolCallMessage).toContain('cancel')
     })
   })
 })

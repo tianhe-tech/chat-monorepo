@@ -162,6 +162,7 @@ export class MCPMessageBroker extends EventEmitter<{
 
         const listener = (data: ElicitResult) => {
           clearTimeout(timeout)
+          this.#logger.debug('sending elicitation result', data)
           resolve(data)
         }
         this.on('elicitationResult', listener)

@@ -4,6 +4,7 @@
   "tasks": {
     "dev": {
       "persistent": true
-    }
+    },
+    "test": {}
   }
 }

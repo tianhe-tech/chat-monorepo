@@ -27,7 +27,7 @@ async def echo(text: str) -> str:
 
 
 @mcp.tool
-async def sample_completion(
+async def sampling(
     prompt: str,
     ctx: Context,
     temperature: float = 0.7,
@@ -36,7 +36,7 @@ async def sample_completion(
     """Request a text sample from the client's LLM for testing."""
     response = await ctx.sample(
         messages=prompt,
-        system_prompt='You generate short, factual replies.',
+        system_prompt='We are testing MCP sampling',
         temperature=temperature,
         max_tokens=max_tokens,
     )
@@ -45,7 +45,7 @@ async def sample_completion(
 
 
 @mcp.tool
-async def elicit_preference(
+async def elicitation(
     topic: str,
     ctx: Context,
 ) -> dict[str, str]:
