@@ -17,4 +17,4 @@ RUN pnpm --filter ./apps/mcp... --prod deploy out
 FROM node:22-alpine AS runner
 WORKDIR /app
 COPY --from=pruned /app/out .
-CMD ["npm", "start"]
+CMD ["./node_modules/.bin/dotenvx", "run", "--", "node", "dist/index.js"]
