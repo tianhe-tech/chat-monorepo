@@ -6,6 +6,7 @@
       "persistent": true,
       "with": ["@th-chat/mcp#dev"],
       "passThroughEnv": ["DEEPSEEK_API_KEY"]
-    }
+    },
+    "test": {}
   }
 }

@@ -15,11 +15,13 @@ import { v4 as uuid } from 'uuid'
 import { afterAll, beforeAll, beforeEach, describe, expect, test, vi, type Mock } from 'vitest'
 import * as schema from '../../src/db/schema'
 import { MCPMessageChannels } from '../../src/mcp'
+import { testClient } from 'hono/testing'
+import type { AppType } from '../../src/routes'
 
 let pgContainer: StartedPostgreSqlContainer
 let valkeyContainer: StartedValkeyContainer
 let db: typeof import('../../src/db').db
-let app: typeof import('../../src/routes').default
+let testApp: ReturnType<typeof testClient<AppType>>
 
 beforeAll(async () => {
   pgContainer = await new PostgreSqlContainer('postgres').start()
@@ -30,7 +32,8 @@ beforeAll(async () => {
 
   db = (await import('../../src/db')).db
   await migrate(db, { migrationsFolder: resolve(import.meta.dirname, '../../drizzle') })
-  app = (await import('../../src/routes')).default
+  const app = (await import('../../src/routes')).default
+  testApp = testClient(app)
 
   consola.wrapAll()
   consola.pauseLogs()
@@ -107,27 +110,34 @@ beforeEach(async () => {
 })
 
 function requestListTools({ threadId, refresh = false }: { threadId: string; refresh?: boolean }) {
-  const search = refresh ? '?refresh=true' : ''
-  return app.request(`/tools${search}`, {
-    method: 'get',
-    headers: {
-      'mcp-thread-id': threadId,
+  return testApp.tools.$get(
+    {
+      query: {
+        refresh: String(refresh),
+      },
     },
-  })
+    {
+      headers: {
+        'mcp-thread-id': threadId,
+      },
+    },
+  )
 }
 
 function requestCallTool({ threadId, name, args }: { threadId: string; name: string; args?: Record<string, unknown> }) {
-  return app.request('/tools', {
-    method: 'post',
-    headers: {
-      'content-type': 'application/json',
-      'mcp-thread-id': threadId,
+  return testApp.tools.$post(
+    {
+      json: {
+        name,
+        arguments: args,
+      },
     },
-    body: JSON.stringify({
-      name,
-      arguments: args,
-    }),
-  })
+    {
+      headers: {
+        'mcp-thread-id': threadId,
+      },
+    },
+  )
 }
 
 test('list tools', async () => {

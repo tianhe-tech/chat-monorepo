@@ -10,6 +10,8 @@
     "build": "tsdown",
     "type-check": "tsc --noEmit",
     "start": "dotenvx run -- node dist/index.js",
+    "test": "dotenvx run -- vitest run",
+    "test:dev": "dotenvx run -- vitest",
     "mastra:dev": "dotenvx run -- mastra dev",
     "db:generate": "dotenvx run -- drizzle-kit generate",
     "db:migrate": "dotenvx run -- drizzle-kit migrate",
@@ -47,11 +49,14 @@
     "@ai-sdk/provider": "catalog:",
     "@dotenvx/dotenvx": "^1.49.0",
     "@repo/tsconfig": "workspace:@th-chat/tsconfig@*",
+    "@testcontainers/postgresql": "catalog:test",
+    "@testcontainers/valkey": "catalog:test",
     "@types/node": "^24.5.2",
     "@types/pg": "^8.15.5",
     "drizzle-kit": "^0.31.4",
     "tsdown": "^0.15.2",
     "tsx": "^4.20.5",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "vitest": "catalog:test"
   }
 }

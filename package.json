@@ -12,13 +12,13 @@
   "packageManager": "pnpm@10.17.1",
   "devDependencies": {
     "@prettier/plugin-oxc": "^0.0.4",
-    "@testcontainers/postgresql": "^11.6.0",
-    "@testcontainers/valkey": "^11.6.0",
-    "@th-chat/tsconfig": "workspace:*",
+    "@testcontainers/postgresql": "catalog:test",
+    "@testcontainers/valkey": "catalog:test",
+    "@repo/tsconfig": "workspace:@th-chat/tsconfig@*",
     "oxlint": "^1.11.1",
     "prettier": "^3.6.2",
     "prettier-plugin-tailwindcss": "^0.6.14",
     "turbo": "^2.5.8",
-    "vitest": "^3.2.4"
+    "vitest": "catalog:test"
   }
 }

@@ -64,6 +64,9 @@
     },
     "./mcp": {
       "import": "./src/mcp/index.ts"
+    },
+    "./routes": {
+      "import": "./src/routes/index.ts"
     }
   },
   "publishConfig": {
@@ -76,6 +79,10 @@
       "./mcp": {
         "import": "./dist/mcp/index.js",
         "types": "./dist/mcp/index.d.ts"
+      },
+      "./routes": {
+        "import": "./dist/routes/index.js",
+        "types": "./dist/routes/index.d.ts"
       }
     }
   }

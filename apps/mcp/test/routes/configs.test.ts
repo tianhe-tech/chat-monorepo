@@ -4,11 +4,14 @@ import { migrate } from 'drizzle-orm/node-postgres/migrator'
 import { resolve } from 'node:path'
 import { v4 as uuid } from 'uuid'
 import { afterAll, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest'
+import { testClient } from 'hono/testing'
 import * as schema from '../../src/db/schema'
+import type { AppType } from '../../src/routes'
+import { inspect } from 'node:util'
 
 let pgContainer: StartedPostgreSqlContainer
 let db: typeof import('../../src/db').db
-let app: typeof import('../../src/routes').default
+let testApp: ReturnType<typeof testClient<AppType>>
 
 beforeAll(async () => {
   pgContainer = await new PostgreSqlContainer('postgres').start()
@@ -17,7 +20,8 @@ beforeAll(async () => {
 
   db = (await import('../../src/db')).db
   await migrate(db, { migrationsFolder: resolve(import.meta.dirname, '../../drizzle') })
-  app = (await import('../../src/routes')).default
+  const app = (await import('../../src/routes')).default
+  testApp = testClient(app)
 
   consola.wrapAll()
   consola.pauseLogs()
@@ -36,30 +40,23 @@ beforeEach(async () => {
   await db.delete(schema.mcpServerConfig)
 })
 
-type ConfigRecord = {
-  id: number
-  name: string
-  url: string
-  requestInit?: { headers?: Record<string, string> } | null
-  deletedAt?: string | null
-}
-
 function requestCreate({ clientId, servers }: { clientId: string; servers: Array<{ name: string; url: string }> }) {
-  return app.request('/configs', {
-    method: 'post',
-    headers: {
-      'content-type': 'application/json',
-      'mcp-client-id': clientId,
+  return testApp.configs.$post(
+    {
+      json: {
+        servers,
+      },
     },
-    body: JSON.stringify({
-      servers,
-    }),
-  })
+    {
+      headers: {
+        'mcp-client-id': clientId,
+      },
+    },
+  )
 }
 
 function requestList({ clientId }: { clientId: string }) {
-  return app.request('/configs', {
-    method: 'get',
+  return testApp.configs.$get(undefined, {
     headers: {
       'mcp-client-id': clientId,
     },
@@ -67,12 +64,18 @@ function requestList({ clientId }: { clientId: string }) {
 }
 
 function requestById({ clientId, configId }: { clientId: string; configId: number }) {
-  return app.request(`/configs/${configId}`, {
-    method: 'get',
-    headers: {
-      'mcp-client-id': clientId,
+  return testApp.configs[':id'].$get(
+    {
+      param: {
+        id: String(configId),
+      },
     },
-  })
+    {
+      headers: {
+        'mcp-client-id': clientId,
+      },
+    },
+  )
 }
 
 function requestUpdate({
@@ -84,31 +87,40 @@ function requestUpdate({
   configId: number
   updates: { name?: string; url?: string; headers?: Record<string, string> }
 }) {
-  return app.request(`/configs/${configId}`, {
-    method: 'put',
-    headers: {
-      'content-type': 'application/json',
-      'mcp-client-id': clientId,
+  return testApp.configs[':id'].$put(
+    {
+      param: {
+        id: String(configId),
+      },
+      json: updates,
     },
-    body: JSON.stringify(updates),
-  })
+    {
+      headers: {
+        'mcp-client-id': clientId,
+      },
+    },
+  )
 }
 
 function requestDelete({ clientId, ids }: { clientId: string; ids: number[] }) {
-  return app.request('/configs', {
-    method: 'delete',
-    headers: {
-      'content-type': 'application/json',
-      'mcp-client-id': clientId,
+  return testApp.configs.$delete(
+    {
+      json: {
+        ids,
+      },
     },
-    body: JSON.stringify({ ids }),
-  })
+    {
+      headers: {
+        'mcp-client-id': clientId,
+      },
+    },
+  )
 }
 
 describe('Create', () => {
   test('creates a single config for a client', async () => {
     const res = await requestCreate({ clientId: uuid(), servers: [{ name: 'test', url: 'https://example.com' }] })
-    expect(res).toMatchObject({ status: 201 })
+    expect(res.status, inspect(await res.json())).toBe(201)
     expect(await db.$count(schema.mcpServerConfig)).toBe(1)
   })
 
@@ -121,7 +133,7 @@ describe('Create', () => {
     )
 
     for (const res of results) {
-      expect(res).toMatchObject({ status: 201 })
+      expect(res.status, inspect(await res.json())).toBe(201)
     }
     expect(await db.$count(schema.mcpServerConfig)).toBe(10)
   })
@@ -130,7 +142,7 @@ describe('Create', () => {
     const clientId = uuid()
     const servers = Array.from({ length: 10 }).map((_, i) => ({ name: `test${i}`, url: `https://example.com/${i}` }))
     const res = await requestCreate({ clientId, servers })
-    expect(res).toMatchObject({ status: 201 })
+    expect(res.status, inspect(await res.json())).toBe(201)
     expect(await db.$count(schema.mcpServerConfig)).toBe(10)
   })
 
@@ -145,7 +157,7 @@ describe('Create', () => {
     )
 
     for (const res of results) {
-      expect(res).toMatchObject({ status: 201 })
+      expect(res.status, inspect(await res.json())).toBe(201)
     }
     expect(await db.$count(schema.mcpServerConfig)).toBe(100)
   })
@@ -153,22 +165,22 @@ describe('Create', () => {
   test('rejects duplicate names for the same client', async () => {
     const clientId = uuid()
     const res1 = await requestCreate({ clientId, servers: [{ name: 'test', url: 'https://example.com' }] })
-    expect(res1).toMatchObject({ status: 201 })
+    expect(res1.status, inspect(await res1.json())).toBe(201)
     expect(await db.$count(schema.mcpServerConfig)).toBe(1)
 
     const res2 = await requestCreate({ clientId, servers: [{ name: 'test', url: 'https://example2.com' }] })
-    expect(res2).toMatchObject({ status: 400 })
+    expect(res2.status).toBe(400)
     expect(await db.$count(schema.mcpServerConfig)).toBe(1)
   })
 
   test('rejects duplicate urls for the same client', async () => {
     const clientId = uuid()
     const res1 = await requestCreate({ clientId, servers: [{ name: 'test', url: 'https://example.com' }] })
-    expect(res1).toMatchObject({ status: 201 })
+    expect(res1.status, inspect(await res1.json())).toBe(201)
     expect(await db.$count(schema.mcpServerConfig)).toBe(1)
 
     const res2 = await requestCreate({ clientId, servers: [{ name: 'test2', url: 'https://example.com' }] })
-    expect(res2).toMatchObject({ status: 400 })
+    expect(res2.status).toBe(400)
     expect(await db.$count(schema.mcpServerConfig)).toBe(1)
   })
 })
@@ -183,11 +195,11 @@ describe('Read', () => {
         { name: 'secondary', url: 'https://example.org' },
       ],
     })
-    expect(createRes).toMatchObject({ status: 201 })
+    expect(createRes.status, inspect(await createRes.json())).toBe(201)
 
     const res = await requestList({ clientId })
-    expect(res).toMatchObject({ status: 200 })
-    const configs = (await res.json()) as ConfigRecord[]
+    const configs = await res.json()
+    expect(res.status, inspect(configs)).toBe(200)
     expect(configs).toHaveLength(2)
     expect(configs.map((config) => config.name)).toEqual(expect.arrayContaining(['primary', 'secondary']))
   })
@@ -198,13 +210,14 @@ describe('Read', () => {
       clientId,
       servers: [{ name: 'single', url: 'https://example.com' }],
     })
-    expect(createRes).toMatchObject({ status: 201 })
-    const createdConfigs = (await createRes.json()) as ConfigRecord[]
+
+    const createdConfigs = await createRes.json()
+    expect(createRes.status, inspect(createdConfigs)).toBe(201)
     const createdConfig = createdConfigs[0]
 
     const res = await requestById({ clientId, configId: createdConfig.id })
-    expect(res).toMatchObject({ status: 200 })
-    const fetched = (await res.json()) as ConfigRecord
+    const fetched = await res.json()
+    expect(res.status, inspect(fetched)).toBe(200)
     expect(fetched.id).toBe(createdConfig.id)
     expect(fetched.name).toBe('single')
     expect(fetched.url).toBe('https://example.com')
@@ -213,7 +226,7 @@ describe('Read', () => {
   test('returns 404 when config is missing', async () => {
     const clientId = uuid()
     const res = await requestById({ clientId, configId: 999_999 })
-    expect(res).toMatchObject({ status: 404 })
+    expect(res.status).toBe(404)
   })
 })
 
@@ -229,8 +242,9 @@ describe('Update', () => {
         },
       ],
     })
-    expect(createRes).toMatchObject({ status: 201 })
-    const [createdConfig] = (await createRes.json()) as ConfigRecord[]
+    const createdConfigs = await createRes.json()
+    expect(createRes.status, inspect(createdConfigs)).toBe(201)
+    const [createdConfig] = createdConfigs
 
     const res = await requestUpdate({
       clientId,
@@ -243,8 +257,8 @@ describe('Update', () => {
         },
       },
     })
-    expect(res).toMatchObject({ status: 200 })
-    const updated = (await res.json()) as ConfigRecord
+    const updated = await res.json()
+    expect(res.status, inspect(updated)).toBe(200)
     expect(updated.name).toBe('updated-name')
     expect(updated.url).toBe('https://example.org')
     expect(updated.requestInit?.headers).toEqual({ Authorization: 'Bearer token' })
@@ -266,8 +280,8 @@ describe('Update', () => {
         { name: 'second', url: 'https://example.com/2' },
       ],
     })
-    expect(createRes).toMatchObject({ status: 201 })
-    const createdConfigs = (await createRes.json()) as ConfigRecord[]
+    const createdConfigs = await createRes.json()
+    expect(createRes.status, inspect(createdConfigs)).toBe(201)
     const target = createdConfigs.find((config) => config.name === 'second')!
 
     const res = await requestUpdate({
@@ -275,7 +289,7 @@ describe('Update', () => {
       configId: target.id,
       updates: { name: 'first' },
     })
-    expect(res).toMatchObject({ status: 400 })
+    expect(res.status).toBe(400)
   })
 
   test('responds with 404 when updating a missing config', async () => {
@@ -285,7 +299,7 @@ describe('Update', () => {
       configId: 1,
       updates: { name: 'missing' },
     })
-    expect(res).toMatchObject({ status: 404 })
+    expect(res.status).toBe(404)
   })
 })
 
@@ -300,16 +314,16 @@ describe('Delete', () => {
         { name: 'three', url: 'https://example.com/3' },
       ],
     })
-    expect(createRes).toMatchObject({ status: 201 })
-    const createdConfigs = (await createRes.json()) as ConfigRecord[]
+    const createdConfigs = await createRes.json()
+    expect(createRes.status, inspect(createdConfigs)).toBe(201)
     const [first, second, third] = createdConfigs
 
     const res = await requestDelete({
       clientId,
       ids: [first.id, second.id],
     })
-    expect(res).toMatchObject({ status: 200 })
-    const outcome = (await res.json()) as { deleted: number; notFound: number[] }
+    const outcome = await res.json()
+    expect(res.status, inspect(outcome)).toBe(200)
     expect(outcome.deleted).toBe(2)
     expect(outcome.notFound).toHaveLength(0)
 
@@ -329,6 +343,6 @@ describe('Delete', () => {
   test('returns 404 when none of the ids exist', async () => {
     const clientId = uuid()
     const res = await requestDelete({ clientId, ids: [1, 2] })
-    expect(res).toMatchObject({ status: 404 })
+    expect(res.status).toBe(404)
   })
 })

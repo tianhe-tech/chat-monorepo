@@ -9,6 +9,12 @@
     "no-empty": "error",
     "no-disabled-tests": "off",
     "expect-expect": "off",
-    "valid-title": "off"
+    "valid-title": "off",
+    "valid-expect": [
+      "error",
+      {
+        "maxArgs": 2
+      }
+    ]
   }
 }

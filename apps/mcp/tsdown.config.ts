@@ -5,6 +5,7 @@ export default defineConfig({
   entry: {
     index: 'src/index.ts',
     mcp: 'src/mcp/index.ts',
+    routes: 'src/routes/index.ts',
   },
   dts: true,
   tsconfig: true,
