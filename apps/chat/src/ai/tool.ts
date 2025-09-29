@@ -1,19 +1,18 @@
+import type { CallToolResult, Tool as MCPTool } from '@modelcontextprotocol/sdk/types.js'
 import type { ToolConfirmInput } from '@repo/shared/ai'
 import {
-  tool,
-  type JSONValue,
-  type Tool as AITool,
-  type ToolCallOptions,
-  type ToolExecuteFunction,
   dynamicTool,
   jsonSchema,
+  tool,
+  type Tool as AITool,
+  type JSONValue,
+  type ToolCallOptions,
+  type ToolExecuteFunction,
 } from 'ai'
-import type { AIStreamContext } from './types'
-import type { CallToolRequest, CallToolResult, Tool as MCPTool } from '@modelcontextprotocol/sdk/types.js'
-import { ofetch } from 'ofetch'
-import { env } from '../env'
 import assert from 'node:assert'
 import { useChatALS } from '../context/chat-als'
+import { mcpFetcher } from '../utils/mcp-fetcher'
+import type { AIStreamContext } from './types'
 
 export function toolWithConfirm<
   INPUT extends JSONValue | unknown | never = any,
@@ -89,21 +88,22 @@ export function convertMCPToolToAITool(
           als.currentToolCallId = toolCallId
 
           console.debug(`Calling MCP Tool ${mcpTool.name}...`)
-          const { isError, content } = await ofetch<CallToolResult>('/tools', {
-            baseURL: env.MCP_SERVICE_URL,
-            method: 'POST',
-            headers: {
-              'mcp-thread-id': als.threadId,
-            },
-            body: {
-              name: mcpTool.name,
-              arguments: input,
-              _meta: {
-                progressToken: toolCallId,
+          const { content, isError } = await mcpFetcher
+            .post('/tools', {
+              json: {
+                name: mcpTool.name,
+                arguments: input as Record<string, unknown>,
+                _meta: {
+                  progressToken: toolCallId,
+                },
               },
-            } as CallToolRequest['params'],
-            signal: abortSignal,
-          })
+              headers: {
+                'mcp-thread-id': als.threadId,
+              },
+              signal: abortSignal,
+            })
+            .json<CallToolResult>()
+
           console.debug(`MCP Tool ${mcpTool.name} call finished.`)
 
           const result = content.map((c) => {

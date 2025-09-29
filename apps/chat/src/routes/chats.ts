@@ -20,26 +20,21 @@ import { consola } from 'consola'
 import { eq } from 'drizzle-orm'
 import { goTryRaw } from 'go-go-try'
 import { Hono } from 'hono'
-import { hc } from 'hono/client'
 import { HTTPException } from 'hono/http-exception'
 import assert from 'node:assert'
 import { AsyncLocalStorage } from 'node:async_hooks'
 import { inspect } from 'node:util'
-import { ofetch } from 'ofetch'
 import { z } from 'zod'
 import { convertMCPToolToAITool } from '../ai/tool'
 import type { MyUIMessage } from '../ai/types'
 import { chatALS, useChatALS, type ChatContext } from '../context/chat-als'
 import { db } from '../db'
 import * as dbSchema from '../db/schema'
-import { env } from '../env'
 import mcpMiddleware from '../middlewares/mcp'
 import streamFinishMiddleware from '../middlewares/stream-finish'
-import type mcpApp from '@repo/mcp/routes'
+import { mcpFetcher } from '../utils/mcp-fetcher'
 
 const model = createDeepSeek().languageModel('deepseek-chat')
-
-const mcpClient = hc<typeof mcpApp>(env.MCP_SERVICE_URL)
 
 const dataPartSchemas = {
   'aborted-tool': abortedToolDataSchema,
@@ -243,13 +238,12 @@ const chatApp = new Hono().post(
     const mcpTools = await (async () => {
       logger.debug('Fetching tools from MCP service...')
       const [err, toolDefs = {}] = await goTryRaw(
-        ofetch<Record<string, MCPTool[]>>('/tools', {
-          baseURL: env.MCP_SERVICE_URL,
-          signal,
-          headers: {
-            'mcp-thread-id': threadId,
-          },
-        }),
+        mcpFetcher
+          .get('/tools', {
+            headers: { 'mcp-thread-id': threadId },
+            signal,
+          })
+          .json<Record<string, MCPTool[]>>(),
       )
 
       if (err) {
