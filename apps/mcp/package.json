@@ -11,7 +11,7 @@
     "dev": "dotenvx run -- tsx --watch src/index.ts",
     "build": "tsdown",
     "type-check": "tsc --noEmit",
-    "start": "dotenvx --ignore=MISSING_ENV_FILE run -- node dist/index.js",
+    "start": "dotenvx run --ignore=MISSING_ENV_FILE -- node dist/index.js",
     "test": "dotenvx run -- vitest run",
     "test:dev": "dotenvx run -- vitest",
     "db:generate": "dotenvx run -- drizzle-kit generate",

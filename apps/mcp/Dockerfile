@@ -3,11 +3,20 @@ ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN npm install -g pnpm@latest
 
+FROM base AS pruned
+WORKDIR /app
+RUN pnpm install -g turbo@^2
+COPY . .
+RUN turbo prune @th-chat/mcp --docker
+
 FROM base AS builder
 WORKDIR /app
-COPY . .
+COPY --from=pruned /app/out/json .
 RUN pnpm config set --location project --json injectWorkspacePackages true
 RUN pnpm --filter ./apps/mcp... install --no-frozen-lockfile
+
+COPY --from=pruned /app/out/full .
+RUN pnpm config set --location project --json injectWorkspacePackages true
 RUN pnpm --filter ./apps/mcp... run build
 RUN pnpm --filter ./apps/mcp... deploy --prod out
 
