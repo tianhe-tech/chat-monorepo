@@ -1,5 +1,5 @@
 import { zValidator } from '@hono/zod-validator'
-import { formatDBErrorMessage } from '@repo/shared/db'
+import { formatDBErrorMessage } from '@repo/shared/utils'
 import { consola } from 'consola'
 import { eq, inArray, sql, type InferInsertModel } from 'drizzle-orm'
 import { goTryRaw } from 'go-go-try'

@@ -1,12 +1,13 @@
 import { createMiddleware } from 'hono/factory'
 import { MCPClientManager, type ServerDefinition } from '../mcp/client'
-import { formatDBErrorMessage } from '@repo/shared/db'
+import { formatDBErrorMessage } from '@repo/shared/utils'
 import { mcpClientCache } from '../mcp/cache'
 import { consola } from 'consola'
 import { db } from '../db'
 import { goTryRaw } from 'go-go-try'
 import { HTTPException } from 'hono/http-exception'
 import assert from 'node:assert'
+import { env } from '../env'
 
 const logger = consola.withTag('MCP Middleware')
 
@@ -53,10 +54,20 @@ const mcpMiddleware = createMiddleware(async (c, next) => {
       { url: config.url, headers: config.requestInit?.headers },
     ]),
   )
-  const newClient = new MCPClientManager({ servers, threadId })
-  mcpClientCache.set(threadId, newClient)
+  const newClient = await MCPClientManager.createMCPClientManager({
+    servers,
+    pubsubOptions: {
+      id: threadId,
+      valkeyAddresses: env.VALKEY_ADDRESSES,
+    },
+  })
+
+  if (newClient.isErr()) {
+    throw new HTTPException(500)
+  }
+  mcpClientCache.set(threadId, newClient.value)
   // TODO: handle newClient connection error
-  c.set('mcpClient', newClient)
+  c.set('mcpClient', newClient.value)
 
   await next()
 

@@ -2,19 +2,17 @@
   "name": "@th-chat/shared",
   "version": "1.0.0",
   "description": "",
-  "main": "./dist/index.js",
+  "private": true,
   "type": "module",
-  "scripts": {
-    "build": "tsdown"
-  },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "packageManager": "pnpm@10.15.0",
   "devDependencies": {
     "@modelcontextprotocol/sdk": "catalog:",
     "@types/pg": "^8.15.5",
+    "@valkey/valkey-glide": "^2.1.0",
     "ai": "catalog:",
+    "consola": "^3.4.2",
     "drizzle-orm": "^0.44.5",
     "pg": "^8.16.3",
     "tsdown": "^0.14.1",
@@ -24,22 +22,14 @@
   "types": "./dist/index.d.ts",
   "exports": {
     "./ai": "./src/ai/index.ts",
-    "./db": "./src/db/index.ts",
-    "./package.json": "./package.json"
-  },
-  "publishConfig": {
-    "exports": {
-      "./ai": "./dist/ai.js",
-      "./db": "./dist/db.js",
-      "./package.json": "./package.json"
-    }
+    "./utils": "./src/utils/index.ts",
+    "./types": "./src/types/index.ts"
   },
   "peerDependencies": {
+    "@valkey/valkey-glide": "^2.1.0",
+    "consola": "^3.4.2",
     "drizzle-orm": "^0.44.5",
     "pg": "^8.16.3",
     "zod": "catalog:"
-  },
-  "dependencies": {
-    "@dotenvx/dotenvx": "catalog:"
   }
 }

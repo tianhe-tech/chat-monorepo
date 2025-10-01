@@ -1,5 +1,5 @@
 {
   "extends": "@repo/tsconfig/node.tsconfig.json",
   "exclude": ["node_modules", "dist"],
-  "include": ["src", "../chat/src/routes/chats.ts"]
+  "include": ["src", "../chat/src/routes/chats.ts", "../../packages/shared/src/utils/pubsub.ts"]
 }

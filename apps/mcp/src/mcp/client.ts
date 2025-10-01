@@ -1,13 +1,14 @@
 import { Client } from '@modelcontextprotocol/sdk/client'
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js'
-import { DEFAULT_REQUEST_TIMEOUT_MSEC } from '@modelcontextprotocol/sdk/shared/protocol.js'
+import { DEFAULT_REQUEST_TIMEOUT_MSEC, type ProgressCallback } from '@modelcontextprotocol/sdk/shared/protocol.js'
 import {
-  CreateMessageRequestSchema,
+  CreateMessageRequestSchema as SamplingRequestSchema,
   ElicitRequestSchema,
   LoggingMessageNotificationSchema,
   type CallToolRequest,
-  type CreateMessageRequest,
-  type CreateMessageResult,
+  type CallToolResult,
+  type CreateMessageRequest as SamplingRequest,
+  type CreateMessageResult as SamplingResult,
   type ElicitRequest,
   type ElicitResult,
   type LoggingMessageNotification,
@@ -15,126 +16,129 @@ import {
   type Prompt,
   type Resource,
 } from '@modelcontextprotocol/sdk/types.js'
+import { MCPMessageChannel, type MCPMessageChannelString } from '@repo/shared/types'
+import { PubSub, type ValkeyAddresses } from '@repo/shared/utils'
 import { consola, type ConsolaInstance } from 'consola'
-import { colorize } from 'consola/utils'
-import { asyncExitHook } from 'exit-hook'
-import { goTryRaw } from 'go-go-try'
+import { ResultAsync, err, errAsync, ok, okAsync } from 'neverthrow'
 import { z } from 'zod'
+import { z as z3 } from 'zodv3'
 import { env } from '../env'
-import { MCPMessageBroker } from './message-broker'
-import { MCPMessageChannels } from '.'
+import type { MCPServerDefinition } from '@repo/shared/types'
 
-type MCPClientManagerOptions = {
-  servers: Record<string, ServerDefinition>
-  threadId: string
+type PubSubOptions = {
+  valkeyAddresses: ValkeyAddresses
+  id: string
 }
 
-export const serverDefinitionSchema = z.object({
-  url: z.url(),
-  headers: z.record(z.string(), z.string()).optional(),
-})
-
-export type ServerDefinition = z.infer<typeof serverDefinitionSchema>
-
-type Awaitable<T> = T | Promise<T>
+type MCPClientManagerOptions = {
+  servers: Record<string, MCPServerDefinition>
+  pubsubOptions?: PubSubOptions
+}
 
 // TODO: connection and message broker lifetime management
 export class MCPClientManager {
-  readonly threadId: string
-  readonly #serverConfigs: Record<string, ServerDefinition>
+  readonly #serverConfigs: Record<string, MCPServerDefinition>
   readonly #mcpClientsByName = new Map<string, InternalMCPClient>()
   #logger: ConsolaInstance
-  #disconnectPromise?: Promise<void>
-  #setupPromise?: Promise<void>
   /**
    * Mapping of server names to their respective tools
    */
-  #tools?: Promise<Record<string, MCPTool[]>>
-  #messageBroker: MCPMessageBroker
+  #tools?: ResultAsync<Record<string, MCPTool[]>, unknown>
+  #pubsub?: PubSub<MCPMessageChannelString>
+  #clientDisposableStack = new AsyncDisposableStack()
 
-  constructor({ servers, threadId }: MCPClientManagerOptions) {
-    this.threadId = threadId
-    this.#logger = consola.withTag(`MCPClientManager:${threadId}`)
-
-    for (const server of Object.values(servers)) {
-      const parsedServer = serverDefinitionSchema.parse(server)
-      const url = new URL(parsedServer.url)
-      const isTrusted = env.TRUSTED_MCP_ORIGINS.includes(url.origin)
-      this.#logger.log(`Configured server ${url} as ${colorize('redBright', isTrusted ? 'trusted' : 'untrusted')}`)
-    }
+  private constructor({ servers }: Pick<MCPClientManagerOptions, 'servers'>) {
     this.#serverConfigs = servers
-
-    this.#messageBroker = new MCPMessageBroker({ manager: this })
+    this.#logger = consola.withTag('MCPClientManager')
   }
 
-  async setup() {
-    if (this.#setupPromise === undefined) {
-      this.#setupPromise = this.#messageBroker.setupSub().then(null)
+  static createMCPClientManager({ servers, pubsubOptions }: MCPClientManagerOptions) {
+    const instance = new MCPClientManager({ servers })
+    if (!pubsubOptions) {
+      return okAsync(instance)
     }
-    return this.#setupPromise
+    return instance.#setupPubSub(pubsubOptions).map(() => instance)
   }
 
-  async disconnect() {
-    if (this.#disconnectPromise) {
-      return this.#disconnectPromise
-    }
+  #publish?: (channel: MCPMessageChannelString, data: object) => Promise<number>
 
-    this.#disconnectPromise = (async () => {
-      this.#messageBroker.dispose()
-      await goTryRaw(Promise.all(Array.from(this.#mcpClientsByName.values()).map((client) => client.disconnect())))
-      this.#disconnectPromise = undefined
-    })()
+  #setupPubSub({ valkeyAddresses, id }: PubSubOptions) {
+    const createPubSub = ResultAsync.fromThrowable(() =>
+      PubSub.createPubSub<MCPMessageChannelString>({
+        channels: Object.values(MCPMessageChannel),
+        valkeyAddresses,
+        logTag: `MCPClientPubSub:${id}`,
+        subCallback: ({ channel, message }) => {},
+      }),
+    )
+
+    const created = createPubSub()
+
+    created.map((pubsub) => {
+      this.#pubsub = pubsub
+      this.#publish = (channel: MCPMessageChannelString, data: object) =>
+        pubsub.publish({ channel, message: JSON.stringify({ ...data, id }) })
+    })
   }
 
-  async #getConnectedClientForServer(serverName: string) {
+  async [Symbol.asyncDispose]() {
+    await this.#clientDisposableStack.disposeAsync()
+    this.#pubsub?.close()
+  }
+
+  #getConnectedClientForServer(serverName: string) {
     const serverConfig = this.#serverConfigs[serverName]
     if (!serverConfig) {
       throw new Error(`No server configuration found for server name: ${serverName}`)
     }
-    if (this.#disconnectPromise) {
-      await this.#disconnectPromise
+
+    const handleConnectionError = (err: unknown) => {
+      this.#logger.error(`Error connecting to server ${serverName}:`, err)
+      this.#mcpClientsByName.delete(serverName)
+      return err
     }
+
+    const getConnectedClient = (client: InternalMCPClient) =>
+      client
+        .connect()
+        .mapErr(handleConnectionError)
+        .map(() => client)
 
     const existingClient = this.#mcpClientsByName.get(serverName)
     if (existingClient) {
       this.#logger.debug(`Reusing existing connected client for server: ${serverName}`)
-      await existingClient.connect()
-      return existingClient
+      return getConnectedClient(existingClient)
     }
 
     this.#logger.debug(`Creating new client for server: ${serverName}`)
     const client = new InternalMCPClient({
-      manager: this,
-      messageBroker: this.#messageBroker,
       name: serverName,
       server: serverConfig,
       timeout: env.MCP_CACHE_TTL_MS / 2,
+      onProgress: (progress) => {
+        this.#publish?.(MCPMessageChannel.Progress, progress)
+      },
     })
     this.#mcpClientsByName.set(serverName, client)
-    const [err] = await goTryRaw(client.connect())
-    if (err) {
-      this.#logger.error(`Error connecting to server ${serverName}:`, err)
-      this.#mcpClientsByName.delete(serverName)
-      throw err
-    }
-    return client
+    this.#clientDisposableStack.use(client)
+
+    return getConnectedClient(client)
   }
 
-  async fetchTools() {
-    this.#tools = Promise.all(
-      Object.keys(this.#serverConfigs).map(async (serverName) => {
-        const client = await this.#getConnectedClientForServer(serverName)
-        const tools = await client.listTools()
-
-        return [serverName, tools]
-      }),
-    ).then(Object.fromEntries)
+  fetchTools() {
+    this.#tools = ResultAsync.combine(
+      Object.keys(this.#serverConfigs).map((serverName) =>
+        this.#getConnectedClientForServer(serverName)
+          .andThen((client) => client.listTools())
+          .map((tools) => [serverName, tools]),
+      ),
+    ).map(Object.fromEntries)
     return this.#tools
   }
 
-  async listTools() {
+  listTools() {
     if (this.#tools) {
-      return this.#tools
+      return this.#tools.orElse(() => this.fetchTools())
     }
     return this.fetchTools()
   }
@@ -152,108 +156,115 @@ export class MCPClientManager {
     return { serverName, toolName }
   }
 
-  async callTool(params: CallToolRequest['params'], options?: { signal?: AbortSignal }) {
+  callTool(params: CallToolRequest['params'], options?: { signal?: AbortSignal }) {
     const { serverName, toolName } = this.destructToolName(params.name)
-    const client = await this.#getConnectedClientForServer(serverName)
-    return client.callTool({ ...params, name: toolName }, options)
+    return this.#getConnectedClientForServer(serverName).andThen((client) =>
+      client
+        .callTool({ ...params, name: toolName }, options)
+        .andTee((result) => this.#publish?.(MCPMessageChannel.ToolCallResult, result as CallToolResult)),
+    )
   }
 
-  async setSamplingHandlerForServer(
+  setSamplingHandlerForServer(
     serverName: string,
-    handler: (params: CreateMessageRequest['params']) => Awaitable<CreateMessageResult>,
+    handler: (params: SamplingRequest['params']) => ResultAsync<SamplingResult, unknown>,
   ) {
-    const client = await this.#getConnectedClientForServer(serverName)
-    client.setSamplingHandler(handler)
+    return this.#getConnectedClientForServer(serverName).andThen((client) => client.setSamplingHandler(handler))
   }
 
-  async setElicitationHandlerForServer(
+  setElicitationHandlerForServer(
     serverName: string,
-    handler: (params: ElicitRequest['params']) => Awaitable<ElicitResult>,
+    handler: (params: ElicitRequest['params']) => ResultAsync<ElicitResult, unknown>,
   ) {
-    const client = await this.#getConnectedClientForServer(serverName)
-    client.setElicitationHandler(handler)
+    return this.#getConnectedClientForServer(serverName).andThen((client) => client.setElicitationHandler(handler))
   }
 
-  async setSamplingHandler(
-    handler: (params: CreateMessageRequest['params'] & { serverName: string }) => Awaitable<CreateMessageResult>,
+  setSamplingHandler(
+    handler: (params: SamplingRequest['params'] & { serverName: string }) => ResultAsync<SamplingResult, unknown>,
   ) {
     this.#logger.verbose(`Setting sampling handler for all servers:`, handler.toString())
     const serverNames = Object.keys(this.#serverConfigs)
-    await Promise.all(
-      serverNames.map(async (serverName) => {
-        await this.setSamplingHandlerForServer(serverName, (params) => handler({ ...params, serverName }))
-      }),
+    return ResultAsync.combine(
+      serverNames.map((serverName) =>
+        this.setSamplingHandlerForServer(serverName, (params) => handler({ ...params, serverName })),
+      ),
     )
   }
 
-  async setElicitationHandler(
-    handler: (params: ElicitRequest['params'] & { serverName: string }) => Awaitable<ElicitResult>,
+  setElicitationHandler(
+    handler: (params: ElicitRequest['params'] & { serverName: string }) => ResultAsync<ElicitResult, unknown>,
   ) {
     this.#logger.verbose(`Setting elicitation handler for all servers:`, handler.toString())
     const serverNames = Object.keys(this.#serverConfigs)
-    await Promise.all(
-      serverNames.map(async (serverName) => {
-        await this.setElicitationHandlerForServer(serverName, (params) => handler({ ...params, serverName }))
-      }),
+    return ResultAsync.combine(
+      serverNames.map((serverName) =>
+        this.setElicitationHandlerForServer(serverName, (params) => handler({ ...params, serverName })),
+      ),
     )
   }
 
-  async setLogHandlerForServer(
+  setLogHandlerForServer(
     serverName: string,
-    handler: (params: LoggingMessageNotification['params']) => Awaitable<void>,
+    handler: (params: LoggingMessageNotification['params']) => ResultAsync<void, unknown>,
   ) {
-    const client = await this.#getConnectedClientForServer(serverName)
-    client.setLogHandler(handler)
+    return this.#getConnectedClientForServer(serverName).andThen((client) => client.setLogHandler(handler))
   }
 
-  async setLogHandler(
-    handler: (params: LoggingMessageNotification['params'] & { serverName: string }) => Awaitable<void>,
+  setLogHandler(
+    handler: (params: LoggingMessageNotification['params'] & { serverName: string }) => ResultAsync<void, unknown>,
   ) {
     this.#logger.verbose('Setting log handler for all servers:', handler.toString())
     const serverNames = Object.keys(this.#serverConfigs)
-    await Promise.all(
-      serverNames.map(async (serverName) => {
-        await this.setLogHandlerForServer(serverName, (params) => handler({ ...params, serverName }))
-      }),
+    return ResultAsync.combine(
+      serverNames.map((serverName) =>
+        this.setLogHandlerForServer(serverName, (params) => handler({ ...params, serverName })),
+      ),
     )
+  }
+
+  // oxlint-disable-next-line no-unused-private-class-members
+  #getSamplingHandler() {
+    const publish = this.#publish
+    if (!this.#pubsub || !publish) {
+      this.#logger.warn('PubSub not initialized, skipping sampling setup')
+      return err(new Error('PubSub not initialized'))
+    }
+    return ok((params: SamplingRequest['params']) => {
+      const subCount = publish(MCPMessageChannel.SamplingRequest, params)
+    })
   }
 }
 
 type InternalMCPClientOptions = {
-  manager: MCPClientManager
-  messageBroker: MCPMessageBroker
   name: string
   version?: string
-  server: ServerDefinition
+  server: MCPServerDefinition
   timeout?: number
+  onProgress?: ProgressCallback
 }
 
 // TODO: resume connection
-class InternalMCPClient {
+export class InternalMCPClient {
   readonly name: string
   readonly #timeout: number
   readonly #isTrusted: boolean
-  #manager: MCPClientManager
-  #messageBroker: MCPMessageBroker
   #client: Client
-  #serverConfig: ServerDefinition
+  #serverConfig: MCPServerDefinition
   #transport?: StreamableHTTPClientTransport
-  #isConnected?: Promise<boolean>
+  #isConnected?: ResultAsync<boolean, unknown>
   #logger: ConsolaInstance
   resources?: Promise<Resource[]>
   prompts?: Promise<Prompt[]>
-  tools?: Promise<MCPTool[]>
+  tools?: ResultAsync<MCPTool[], unknown>
+  #onProgress?: ProgressCallback
 
   constructor({
-    manager,
-    messageBroker,
     name,
     version = '0.0.1',
     server,
     timeout = DEFAULT_REQUEST_TIMEOUT_MSEC,
+    onProgress,
   }: InternalMCPClientOptions) {
-    this.#manager = manager
-    this.#messageBroker = messageBroker
     this.name = name
     this.#client = new Client(
       { name, version },
@@ -266,145 +277,151 @@ class InternalMCPClient {
     )
     this.#serverConfig = server
     this.#timeout = timeout
-
-    this.#logger = consola.withTag(`InternalMCPClient:${name}:${this.#manager.threadId}`)
-
+    this.#onProgress = onProgress
+    this.#logger = consola.withTag(`InternalMCPClient:${name}`)
     this.#isTrusted = env.TRUSTED_MCP_ORIGINS.includes(new URL(server.url).origin)
-
     this.#logger.debug('Instantiated')
   }
 
-  async connect() {
-    if (this.#isConnected !== undefined && (await this.#isConnected) === true) {
+  connect() {
+    if (this.#isConnected !== undefined) {
       return this.#isConnected
     }
 
     const { url, headers } = this.#serverConfig
 
-    this.#isConnected = (async () => {
+    const doConnect = ResultAsync.fromThrowable(async () => {
       const transport = new StreamableHTTPClientTransport(new URL(url), {
         requestInit: { headers },
       })
       this.#transport = transport
 
       this.#logger.debug(`Attempting Streamable HTTP connection on URL: ${url}`)
-      const [err] = await goTryRaw(this.#client.connect(transport, { timeout: 5_000 }))
+      return this.#client.connect(transport, { timeout: 5_000 })
+    })
 
-      const originalOnClose = this.#client.onclose
-      // oxlint-disable-next-line prefer-add-event-listener
-      this.#client.onclose = () => {
-        this.#logger.debug('Connection closed')
-        this.#isConnected = Promise.resolve(false)
-        originalOnClose?.()
-      }
-
-      if (err) {
+    this.#isConnected = doConnect()
+      .andTee(() => {
+        const originalOnClose = this.#client.onclose
+        // oxlint-disable-next-line prefer-add-event-listener
+        this.#client.onclose = () => {
+          this.#logger.debug('Connection closed')
+          this.#isConnected = okAsync(false)
+          originalOnClose?.()
+        }
+      })
+      .map(() => {
+        this.#logger.ready(`Connected to MCP server ${this.name} at ${url}`)
+        return true
+      })
+      .mapErr((err) => {
         this.#logger.error(`Failed to connect to MCP server ${this.name} at ${url}:`, err)
-        throw err
-      }
-
-      this.#logger.ready(`Connected to MCP server ${this.name} at ${url}`)
-      this.#manager.setup()
-      return true
-    })()
-
-    asyncExitHook(
-      async () => {
-        this.#logger.debug('Disconnecting during exit')
-        await this.disconnect()
-      },
-      { wait: 5000 },
-    )
+        return err
+      })
 
     return this.#isConnected
   }
 
-  async disconnect() {
+  async [Symbol.asyncDispose]() {
     if (!this.#transport) {
-      this.#logger.debug('Disconnect called but transport was not connected')
+      this.#logger.info('Dispose called but transport was not connected')
       return
     }
-    this.#logger.debug('Disconnecting')
+    this.#logger.debug('Disposing client and closing transport')
 
-    const [err] = await goTryRaw(this.#transport.close())
+    this.#isConnected = ResultAsync.fromPromise(this.#transport.close(), (e) => e)
+      .andTee(() => {
+        this.#transport = undefined
+      })
+      .map(() => {
+        this.#logger.debug('Transport closed successfully')
+        return false
+      })
+      .mapErr((err) => {
+        this.#logger.error('Error during transport close:', err)
+        return err
+      })
 
-    this.#transport = undefined
-    this.#isConnected = Promise.resolve(false)
-
-    if (err) {
-      this.#logger.error('Error during transport close:', err)
-      throw err
-    }
-
-    this.#logger.debug('Disconnected successfully')
+    await this.#isConnected
   }
 
-  async listTools() {
-    this.tools = (async () => {
-      await this.connect()
-      const [err, res] = await goTryRaw(this.#client.listTools(undefined, { timeout: this.#timeout }))
-      if (err) {
+  disconnect() {
+    return this[Symbol.asyncDispose]()
+  }
+
+  listTools() {
+    this.tools = this.connect()
+      .andThen(ResultAsync.fromThrowable(() => this.#client.listTools(undefined, { timeout: this.#timeout })))
+      .mapErr((err) => {
         this.#logger.error('Error listing tools:', err)
         this.tools = undefined
-        throw err
-      }
-
-      if (!this.#isTrusted) {
-        for (const tool of res.tools) {
-          delete tool._meta
-          delete tool.annotations
+        return err
+      })
+      .map((res) => {
+        if (!this.#isTrusted) {
+          for (const tool of res.tools) {
+            delete tool._meta
+            delete tool.annotations
+          }
         }
-      }
-
-      return res.tools
-    })()
+        return res.tools
+      })
     return this.tools
   }
 
-  async callTool(params: CallToolRequest['params'], options?: { signal?: AbortSignal }) {
-    await this.connect()
-    this.#logger.debug(`Calling tool ${params.name}`, { params })
-    const [err, result] = await goTryRaw(
-      this.#client.callTool(params, undefined, {
-        timeout: this.#timeout,
-        resetTimeoutOnProgress: true,
-        onprogress: (progress) => {
-          this.#messageBroker.publish(
-            { ...progress, progressToken: params._meta?.progressToken },
-            MCPMessageChannels.Progress,
-          )
-        },
-      }),
-    )
-
-    if (err) {
-      this.#logger.error(err)
-      throw err
-    }
-
-    this.#messageBroker.publish(
-      { ...result, progressToken: params._meta?.progressToken },
-      MCPMessageChannels.ToolCallResult,
-    )
-
-    return result
+  callTool(params: CallToolRequest['params'], options?: { signal?: AbortSignal }) {
+    return this.connect()
+      .map(() => {
+        this.#logger.debug(`Calling tool ${params.name}`, { params })
+      })
+      .andThen(
+        ResultAsync.fromThrowable(() =>
+          this.#client.callTool(params, undefined, {
+            timeout: this.#timeout,
+            resetTimeoutOnProgress: true,
+            onprogress: this.#onProgress,
+            signal: options?.signal,
+          }),
+        ),
+      )
   }
 
-  async setSamplingHandler(handler: (params: CreateMessageRequest['params']) => Awaitable<CreateMessageResult>) {
-    await this.connect()
-    this.#logger.debug(`Setting sampling handler for server ${this.name}:`, handler.toString())
-    this.#client.setRequestHandler(CreateMessageRequestSchema, ({ params }) => handler(params))
+  setSamplingHandler(handler: (params: SamplingRequest['params']) => ResultAsync<SamplingResult, unknown>) {
+    return this.connect().map(() => {
+      this.#logger.debug(`Setting sampling handler for server ${this.name}:`, handler.toString())
+      this.#client.setRequestHandler(SamplingRequestSchema, async ({ params }) => {
+        const res = await handler(params)
+        if (res.isErr()) {
+          throw res.error
+        }
+        return res.value
+      })
+    })
   }
 
-  async setElicitationHandler(handler: (params: ElicitRequest['params']) => Awaitable<ElicitResult>) {
-    await this.connect()
-    this.#logger.debug(`Setting elicitation handler for server ${this.name}:`, handler.toString())
-    this.#client.setRequestHandler(ElicitRequestSchema, ({ params }) => handler(params))
+  setElicitationHandler(handler: (params: ElicitRequest['params']) => ResultAsync<ElicitResult, unknown>) {
+    return this.connect().map(() => {
+      this.#logger.debug(`Setting elicitation handler for server ${this.name}:`, handler.toString())
+      this.#client.setRequestHandler(ElicitRequestSchema, async ({ params }) => {
+        const res = await handler(params)
+        if (res.isErr()) {
+          throw res.error
+        }
+        return res.value
+      })
+    })
   }
 
-  async setLogHandler(handler: (params: LoggingMessageNotification['params']) => Awaitable<void>) {
-    await this.connect()
-    this.#logger.debug(`Setting log handler for server ${this.name}:`, handler.toString())
-    this.#client.setNotificationHandler(LoggingMessageNotificationSchema, ({ params }) => handler(params))
+  setLogHandler(handler: (params: LoggingMessageNotification['params']) => ResultAsync<void, unknown>) {
+    return this.connect().map(() => {
+      this.#logger.debug(`Setting log handler for server ${this.name}:`, handler.toString())
+      this.#client.setNotificationHandler(LoggingMessageNotificationSchema, async ({ params }) => {
+        const res = await handler(params)
+        if (res.isErr()) {
+          throw res.error
+        }
+        return res.value
+      })
+    })
   }
 }
