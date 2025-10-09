@@ -19,6 +19,8 @@ import { testClient } from 'hono/testing'
 import type honoApp from '../../src/routes'
 import { inspect } from 'node:util'
 
+const POLL_TIMEOUT = 10000
+
 let pgContainer: StartedPostgreSqlContainer
 let valkeyContainer: StartedValkeyContainer
 let db: typeof import('../../src/db').db
@@ -36,8 +38,8 @@ beforeAll(async () => {
   const app = (await import('../../src/routes')).default
   testApp = testClient(app)
 
-  // consola.wrapAll()
-  // consola.pauseLogs()
+  consola.wrapAll()
+  consola.pauseLogs()
 })
 
 beforeEach(() => {
@@ -59,7 +61,7 @@ beforeEach(async () => {
 })
 
 let cleanupMCPServer: () => void
-const MCP_SERVER_PORT = 8765
+const MCP_SERVER_PORT = 8766
 
 beforeAll(async () => {
   const { teardown } = await spinUpFixtureMCPServer({ port: MCP_SERVER_PORT })
@@ -195,7 +197,7 @@ describe('call tools', () => {
 
       expect(res.content).toMatchObject([{ type: 'text', text: 'ping' } as TextContent])
 
-      await expect.poll(() => subLoggerMock, { interval: 100, timeout: 1000 }).toHaveBeenCalledOnce()
+      await expect.poll(() => subLoggerMock, { interval: 100, timeout: POLL_TIMEOUT }).toHaveBeenCalledOnce()
       const subMessage = getSubLoggerMessage()
       expect(subMessage).toContain(MCPMessageChannel.ToolCallResult)
       expect(subMessage).toContain('ping')
@@ -226,22 +228,24 @@ describe('call tools', () => {
         args: { prompt: 'Call to sampling tool' },
       })
 
-      await expect.poll(() => subLoggerMock, { interval: 100, timeout: 5000 }).toHaveBeenCalledOnce()
+      await expect.poll(() => subLoggerMock, { interval: 100, timeout: POLL_TIMEOUT }).toHaveBeenCalledOnce()
       const samplingMessage = getSubLoggerMessage()
       expect(samplingMessage).toContain(MCPMessageChannel.SamplingRequest)
       expect(samplingMessage).toContain('Call to sampling tool')
 
       await pubConn.publish(
         JSON.stringify({
-          model: 'test-model',
-          role: 'assistant',
-          content: { type: 'text', text: 'Sampling Result' },
-          threadId,
-        } as CreateMessageResult),
+          id: threadId,
+          data: {
+            model: 'test-model',
+            role: 'assistant',
+            content: { type: 'text', text: 'Sampling Result' },
+          } as CreateMessageResult,
+        }),
         MCPMessageChannel.SamplingResult,
       )
 
-      await expect.poll(() => subLoggerMock, { interval: 100, timeout: 1000 }).toHaveBeenCalledTimes(3)
+      await expect.poll(() => subLoggerMock, { interval: 100, timeout: POLL_TIMEOUT }).toHaveBeenCalledTimes(3)
 
       const res = await callPromise
       expect(JSON.stringify(await res.json())).toContain('Sampling Result')
@@ -277,24 +281,26 @@ describe('call tools', () => {
         args: { topic: 'Call to elicitation tool' },
       })
 
-      await expect.poll(() => subLoggerMock, { interval: 100, timeout: 1000 }).toHaveBeenCalledOnce()
+      await expect.poll(() => subLoggerMock, { interval: 100, timeout: POLL_TIMEOUT }).toHaveBeenCalledOnce()
       const elicitationMessage = getSubLoggerMessage()
       expect(elicitationMessage).toContain(MCPMessageChannel.ElicitationRequest)
       expect(elicitationMessage).toContain('Call to elicitation tool')
 
       await pubConn.publish(
         JSON.stringify({
-          action: 'accept',
-          threadId,
-          content: {
-            preferred_option: 'option_a',
-            rationale: 'test',
-          },
-        } as ElicitResult),
+          id: threadId,
+          data: {
+            action: 'accept',
+            content: {
+              preferred_option: 'option_a',
+              rationale: 'test',
+            },
+          } as ElicitResult,
+        }),
         MCPMessageChannel.ElicitationResult,
       )
 
-      await expect.poll(() => subLoggerMock, { interval: 100, timeout: 1000 }).toHaveBeenCalledTimes(3)
+      await expect.poll(() => subLoggerMock, { interval: 100, timeout: POLL_TIMEOUT }).toHaveBeenCalledTimes(3)
 
       const res = await (await callPromise).json()
       expect(JSON.stringify(res)).toContain('accept')
@@ -326,20 +332,23 @@ describe('call tools', () => {
         args: { topic: 'Call to elicitation tool' },
       })
 
-      await expect.poll(() => subLoggerMock, { interval: 100, timeout: 1000 }).toHaveBeenCalledOnce()
+      await expect.poll(() => subLoggerMock, { interval: 100, timeout: POLL_TIMEOUT }).toHaveBeenCalledOnce()
       const elicitationMessage = getSubLoggerMessage()
       expect(elicitationMessage).toContain(MCPMessageChannel.ElicitationRequest)
       expect(elicitationMessage).toContain('Call to elicitation tool')
 
       await pubConn.publish(
         JSON.stringify({
-          action: 'decline',
-          threadId,
-        } as ElicitResult),
+          id: threadId,
+          data: {
+            action: 'decline',
+            threadId,
+          } as ElicitResult,
+        }),
         MCPMessageChannel.ElicitationResult,
       )
 
-      await expect.poll(() => subLoggerMock, { interval: 100, timeout: 1000 }).toHaveBeenCalledTimes(3)
+      await expect.poll(() => subLoggerMock, { interval: 100, timeout: POLL_TIMEOUT }).toHaveBeenCalledTimes(3)
 
       const res = await (await callPromise).json()
       expect(JSON.stringify(res)).toContain('decline')
@@ -367,20 +376,23 @@ describe('call tools', () => {
         args: { topic: 'Call to elicitation tool' },
       })
 
-      await expect.poll(() => subLoggerMock, { interval: 100, timeout: 1000 }).toHaveBeenCalledOnce()
+      await expect.poll(() => subLoggerMock, { interval: 100, timeout: POLL_TIMEOUT }).toHaveBeenCalledOnce()
       const elicitationMessage = getSubLoggerMessage()
       expect(elicitationMessage).toContain(MCPMessageChannel.ElicitationRequest)
       expect(elicitationMessage).toContain('Call to elicitation tool')
 
       await pubConn.publish(
         JSON.stringify({
-          action: 'cancel',
-          threadId,
-        } as ElicitResult),
+          id: threadId,
+          data: {
+            action: 'cancel',
+            threadId,
+          } as ElicitResult,
+        }),
         MCPMessageChannel.ElicitationResult,
       )
 
-      await expect.poll(() => subLoggerMock, { interval: 100, timeout: 1000 }).toHaveBeenCalledTimes(3)
+      await expect.poll(() => subLoggerMock, { interval: 100, timeout: POLL_TIMEOUT }).toHaveBeenCalledTimes(3)
 
       const res = await (await callPromise).json()
       expect(JSON.stringify(res)).toContain('cancel')

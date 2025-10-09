@@ -8,7 +8,7 @@ import { HTTPException } from 'hono/http-exception'
 import { z } from 'zod'
 import { db } from '../db'
 import { mcpServerConfig } from '../db/schema'
-import { serverDefinitionSchema } from '../mcp/client'
+import { mcpServerDefinitionSchema } from '@repo/shared/types'
 import { mcpClientCache } from '../mcp/cache'
 
 const logger = consola.withTag('Configs App')
@@ -19,7 +19,7 @@ const configsApp = new Hono()
     zValidator(
       'json',
       z.object({
-        servers: z.array(serverDefinitionSchema.extend({ name: z.string() })),
+        servers: z.array(mcpServerDefinitionSchema.extend({ name: z.string() })),
       }),
     ),
     async (c) => {
@@ -129,7 +129,7 @@ const configsApp = new Hono()
   .put(
     '/:id',
     zValidator('param', z.object({ id: z.coerce.number() })),
-    zValidator('json', serverDefinitionSchema.extend({ name: z.string() }).partial()),
+    zValidator('json', mcpServerDefinitionSchema.extend({ name: z.string() }).partial()),
     async (c) => {
       const { id } = c.req.valid('param')
       const updates = c.req.valid('json')

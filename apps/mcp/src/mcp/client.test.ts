@@ -1,31 +1,16 @@
-import { MCPClientManager, InternalMCPClient, type ServerDefinition } from './client'
-import { test, vi, describe, beforeAll, afterAll, expect } from 'vitest'
-import { MCPMessageChannel, type MCPMessageChannelString } from '@repo/shared/types'
+import type { MCPServerDefinition } from '@repo/shared/types'
 import { spinUpFixtureMCPServer } from '@repo/test-utils'
-
-vi.mock(import('@repo/shared/utils'), async (importOriginal) => {
-  const { PubSub: OriginalPubSub } = await importOriginal()
-
-  const MockPubSub = class extends OriginalPubSub<MCPMessageChannelString> {
-    static async createPubSub() {
-      return new this({})
-    }
-
-    close = vi.fn()
-    publish = vi.fn();
-
-    [Symbol.dispose] = vi.fn()
-  }
-
-  return {
-    PubSub: MockPubSub,
-  }
-})
+import { consola } from 'consola'
+import { afterAll, beforeAll, describe, expect, test } from 'vitest'
+import { InternalMCPClient, MCPClientManager } from './client'
 
 let cleanupMCPServer: (() => void) | undefined
 const MCP_SERVER_PORT = 8765
 
 beforeAll(async () => {
+  consola.wrapAll()
+  consola.pauseLogs()
+
   const { teardown } = await spinUpFixtureMCPServer({ port: MCP_SERVER_PORT })
   cleanupMCPServer = teardown
 })
@@ -35,7 +20,7 @@ afterAll(() => {
 })
 
 describe('InternalMCPClient', () => {
-  const createClient = (options: { onProgress?: () => void; server?: ServerDefinition; timeout?: number } = {}) => {
+  const createClient = (options: { onProgress?: () => void; server?: MCPServerDefinition; timeout?: number } = {}) => {
     const { onProgress, timeout, server = { url: `http://localhost:${MCP_SERVER_PORT}/mcp` } } = options
 
     return new InternalMCPClient({
@@ -88,13 +73,10 @@ describe('MCPClientManager', () => {
   const server = { url: `http://localhost:${MCP_SERVER_PORT}/mcp` }
 
   const createManager = async () => {
-    const res = await MCPClientManager.new({
-      servers: {
-        [serverName]: server,
-      },
+    const manager = new MCPClientManager({
+      servers: { [serverName]: server },
     })
-    expect(res.isOk()).toBe(true)
-    return res._unsafeUnwrap()
+    return manager
   }
 
   test('constructs and destructs tool names', async () => {

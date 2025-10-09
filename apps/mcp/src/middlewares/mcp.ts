@@ -1,5 +1,5 @@
 import { createMiddleware } from 'hono/factory'
-import { MCPClientManager, type ServerDefinition } from '../mcp/client'
+import { MCPClientManager } from '../mcp/client'
 import { formatDBErrorMessage } from '@repo/shared/utils'
 import { mcpClientCache } from '../mcp/cache'
 import { consola } from 'consola'
@@ -8,6 +8,8 @@ import { goTryRaw } from 'go-go-try'
 import { HTTPException } from 'hono/http-exception'
 import assert from 'node:assert'
 import { env } from '../env'
+import type { MCPServerDefinition } from '@repo/shared/types'
+import { MCPClientPubSubCoordinator } from '../mcp/client-pubsub'
 
 const logger = consola.withTag('MCP Middleware')
 
@@ -49,25 +51,27 @@ const mcpMiddleware = createMiddleware(async (c, next) => {
   }
 
   const servers = Object.fromEntries(
-    serverConfigs.map<[string, ServerDefinition]>((config) => [
+    serverConfigs.map<[string, MCPServerDefinition]>((config) => [
       config.name,
       { url: config.url, headers: config.requestInit?.headers },
     ]),
   )
-  const newClient = await MCPClientManager.new({
+  const newClient = new MCPClientManager({
     servers,
-    pubsubOptions: {
-      id: threadId,
-      valkeyAddresses: env.VALKEY_ADDRESSES,
-    },
   })
 
-  if (newClient.isErr()) {
+  const pubsub = await MCPClientPubSubCoordinator.new({
+    id: threadId,
+    clientManager: newClient,
+    valkeyAddresses: env.VALKEY_ADDRESSES,
+  })
+
+  if (pubsub.isErr()) {
     throw new HTTPException(500)
   }
-  mcpClientCache.set(threadId, newClient.value)
+  mcpClientCache.set(threadId, newClient)
   // TODO: handle newClient connection error
-  c.set('mcpClient', newClient.value)
+  c.set('mcpClient', newClient)
 
   await next()
 
