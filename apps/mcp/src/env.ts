@@ -1,11 +1,11 @@
 import { createEnv } from '@t3-oss/env-core'
 import { safeDestr } from 'destr'
-import { goTryRaw } from 'go-go-try'
+import { Result } from 'neverthrow'
 import { z } from 'zod'
 
 const jsonString = z.string().transform((val, ctx) => {
-  const [err, parsed] = goTryRaw(() => safeDestr(val))
-  if (err) {
+  const result = Result.fromThrowable(() => safeDestr(val))()
+  if (result.isErr()) {
     ctx.addIssue({
       code: 'custom',
       message: 'Invalid JSON string',
@@ -13,7 +13,7 @@ const jsonString = z.string().transform((val, ctx) => {
     })
     return z.NEVER
   }
-  return parsed
+  return result.value
 })
 
 export const env = createEnv({

@@ -7,6 +7,6 @@ export const mcpClientCache = new TTLCache<string, MCPClientManager>({
   updateAgeOnGet: true,
   dispose: (client, key) => {
     console.debug(`Invalidating mcp client cache (${key})`)
-    client?.disconnect()
+    client?.close()
   },
 })

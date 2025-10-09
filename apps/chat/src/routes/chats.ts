@@ -7,7 +7,7 @@ import {
   threadTitleDataSchema,
   type ToolConfirmInput,
 } from '@repo/shared/ai'
-import { formatDBErrorMessage } from '@repo/shared/db'
+import { constructDBError } from '@repo/shared/utils'
 import {
   convertToModelMessages,
   createUIMessageStream,
@@ -94,7 +94,10 @@ const chatApp = new Hono().post(
       )
 
       if (threadQueryErr) {
-        logger.error(formatDBErrorMessage(threadQueryErr))
+        {
+          const { message, error: dbError } = constructDBError(threadQueryErr)
+          logger.error({ error: dbError }, message)
+        }
         throw new HTTPException(500)
       }
 
@@ -103,7 +106,10 @@ const chatApp = new Hono().post(
           db.insert(dbSchema.thread).values({ id: threadId, userId: user.id, scope: user.scope }),
         )
         if (err) {
-          logger.error(formatDBErrorMessage(err))
+          {
+            const { message, error: dbError } = constructDBError(err)
+            logger.error({ error: dbError }, message)
+          }
           throw new HTTPException(500)
         }
       }
@@ -127,7 +133,10 @@ const chatApp = new Hono().post(
         )
 
         if (err) {
-          logger.error(formatDBErrorMessage(err))
+          {
+            const { message, error: dbError } = constructDBError(err)
+            logger.error({ error: dbError }, message)
+          }
           throw new HTTPException(500)
         }
         logger.debug('Saved message to db successfully')
@@ -319,7 +328,10 @@ const chatApp = new Hono().post(
               ),
             )
             if (err) {
-              logger.error(formatDBErrorMessage(err))
+              {
+                const { message, error: dbError } = constructDBError(err)
+                logger.error({ error: dbError }, message)
+              }
               throw err
             }
             logger.debug('Saved assistant message to db successfully')

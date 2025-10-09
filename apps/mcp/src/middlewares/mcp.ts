@@ -1,14 +1,14 @@
-import { createMiddleware } from 'hono/factory'
-import { MCPClientManager } from '../mcp/client'
-import { formatDBErrorMessage } from '@repo/shared/utils'
-import { mcpClientCache } from '../mcp/cache'
-import { consola } from 'consola'
-import { db } from '../db'
-import { goTryRaw } from 'go-go-try'
-import { HTTPException } from 'hono/http-exception'
-import assert from 'node:assert'
-import { env } from '../env'
 import type { MCPServerDefinition } from '@repo/shared/types'
+import { constructDBError } from '@repo/shared/utils'
+import { consola } from 'consola'
+import { createMiddleware } from 'hono/factory'
+import { HTTPException } from 'hono/http-exception'
+import { ResultAsync } from 'neverthrow'
+import assert from 'node:assert'
+import { db } from '../db'
+import { env } from '../env'
+import { mcpClientCache } from '../mcp/cache'
+import { MCPClientManager } from '../mcp/client'
 import { MCPClientPubSubCoordinator } from '../mcp/client-pubsub'
 
 const logger = consola.withTag('MCP Middleware')
@@ -32,26 +32,28 @@ const mcpMiddleware = createMiddleware(async (c, next) => {
   }
   logger.debug(`Cache miss (${threadId})`)
 
-  const [err, serverConfigs] = await goTryRaw(
+  const serverConfigs = await ResultAsync.fromPromise(
     db.query.mcpServerConfig.findMany({
       where: (config, { and, eq, isNull }) =>
         and(eq(config.userId, user.id), eq(config.scope, user.scope), isNull(config.deletedAt)),
     }),
+    (err) => {
+      const { message, error: dbError } = constructDBError(err)
+      logger.error({ error: dbError }, message)
+      return new HTTPException(500)
+    },
   )
-
-  if (err) {
-    const msg = formatDBErrorMessage(err)
-    logger.error(msg)
-    throw new HTTPException(500)
+  if (serverConfigs.isErr()) {
+    throw serverConfigs.error
   }
 
-  if (serverConfigs.length === 0) {
+  if (serverConfigs.value.length === 0) {
     logger.warn(`No MCP Server config found for user(${user.id}) with scope(${user.scope})`)
     return next()
   }
 
   const servers = Object.fromEntries(
-    serverConfigs.map<[string, MCPServerDefinition]>((config) => [
+    serverConfigs.value.map<[string, MCPServerDefinition]>((config) => [
       config.name,
       { url: config.url, headers: config.requestInit?.headers },
     ]),
@@ -70,7 +72,6 @@ const mcpMiddleware = createMiddleware(async (c, next) => {
     throw new HTTPException(500)
   }
   mcpClientCache.set(threadId, newClient)
-  // TODO: handle newClient connection error
   c.set('mcpClient', newClient)
 
   await next()
