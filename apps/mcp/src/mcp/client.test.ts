@@ -88,7 +88,7 @@ describe('MCPClientManager', () => {
   const server = { url: `http://localhost:${MCP_SERVER_PORT}/mcp` }
 
   const createManager = async () => {
-    const res = await MCPClientManager.createMCPClientManager({
+    const res = await MCPClientManager.new({
       servers: {
         [serverName]: server,
       },

@@ -2,88 +2,63 @@ import { Client } from '@modelcontextprotocol/sdk/client'
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js'
 import { DEFAULT_REQUEST_TIMEOUT_MSEC, type ProgressCallback } from '@modelcontextprotocol/sdk/shared/protocol.js'
 import {
-  CreateMessageRequestSchema as SamplingRequestSchema,
   ElicitRequestSchema,
   LoggingMessageNotificationSchema,
+  CreateMessageRequestSchema as SamplingRequestSchema,
   type CallToolRequest,
   type CallToolResult,
-  type CreateMessageRequest as SamplingRequest,
-  type CreateMessageResult as SamplingResult,
   type ElicitRequest,
   type ElicitResult,
   type LoggingMessageNotification,
   type Tool as MCPTool,
+  type Progress,
   type Prompt,
   type Resource,
+  type CreateMessageRequest as SamplingRequest,
+  type CreateMessageResult as SamplingResult,
 } from '@modelcontextprotocol/sdk/types.js'
-import { MCPMessageChannel, type MCPMessageChannelString } from '@repo/shared/types'
-import { PubSub, type ValkeyAddresses } from '@repo/shared/utils'
-import { consola, type ConsolaInstance } from 'consola'
-import { ResultAsync, err, errAsync, ok, okAsync } from 'neverthrow'
-import { z } from 'zod'
-import { z as z3 } from 'zodv3'
-import { env } from '../env'
 import type { MCPServerDefinition } from '@repo/shared/types'
-
-type PubSubOptions = {
-  valkeyAddresses: ValkeyAddresses
-  id: string
-}
+import { consola, type ConsolaInstance } from 'consola'
+import { ResultAsync, ok, okAsync } from 'neverthrow'
+import EventEmitter from 'node:events'
+import { env } from '../env'
 
 type MCPClientManagerOptions = {
   servers: Record<string, MCPServerDefinition>
-  pubsubOptions?: PubSubOptions
 }
 
-// TODO: connection and message broker lifetime management
-export class MCPClientManager {
-  readonly #serverConfigs: Record<string, MCPServerDefinition>
-  readonly #mcpClientsByName = new Map<string, InternalMCPClient>()
-  #logger: ConsolaInstance
-  /**
-   * Mapping of server names to their respective tools
-   */
-  #tools?: ResultAsync<Record<string, MCPTool[]>, unknown>
-  #pubsub?: PubSub<MCPMessageChannelString>
-  #clientDisposableStack = new AsyncDisposableStack()
+type MCPServerName = string
 
-  private constructor({ servers }: Pick<MCPClientManagerOptions, 'servers'>) {
+export class MCPClientManager extends EventEmitter<{
+  error: unknown[]
+  progress: [Progress]
+  toolCallResult: [CallToolResult]
+}> {
+  readonly #serverConfigs: Record<MCPServerName, MCPServerDefinition>
+  readonly #mcpClients = new Map<MCPServerName, InternalMCPClient>()
+  readonly #logger: ConsolaInstance
+  #tools?: ResultAsync<Record<MCPServerName, MCPTool[]>, unknown>
+  readonly #disposableStack = new AsyncDisposableStack()
+
+  constructor({ servers }: Pick<MCPClientManagerOptions, 'servers'>) {
+    super()
     this.#serverConfigs = servers
     this.#logger = consola.withTag('MCPClientManager')
-  }
-
-  static createMCPClientManager({ servers, pubsubOptions }: MCPClientManagerOptions) {
-    const instance = new MCPClientManager({ servers })
-    if (!pubsubOptions) {
-      return okAsync(instance)
-    }
-    return instance.#setupPubSub(pubsubOptions).map(() => instance)
-  }
-
-  #publish?: (channel: MCPMessageChannelString, data: object) => Promise<number>
-
-  #setupPubSub({ valkeyAddresses, id }: PubSubOptions) {
-    const createPubSub = ResultAsync.fromThrowable(() =>
-      PubSub.createPubSub<MCPMessageChannelString>({
-        channels: Object.values(MCPMessageChannel),
-        valkeyAddresses,
-        logTag: `MCPClientPubSub:${id}`,
-        subCallback: ({ channel, message }) => {},
-      }),
-    )
-
-    const created = createPubSub()
-
-    created.map((pubsub) => {
-      this.#pubsub = pubsub
-      this.#publish = (channel: MCPMessageChannelString, data: object) =>
-        pubsub.publish({ channel, message: JSON.stringify({ ...data, id }) })
+    this.on('error', (err) => {
+      this.#logger.error('Error event emitted:', err)
     })
   }
 
+  useDisposable(disposable: AsyncDisposable | Disposable) {
+    this.#disposableStack.use(disposable)
+  }
+
+  async close() {
+    await this.#disposableStack.disposeAsync()
+  }
+
   async [Symbol.asyncDispose]() {
-    await this.#clientDisposableStack.disposeAsync()
-    this.#pubsub?.close()
+    await this.close()
   }
 
   #getConnectedClientForServer(serverName: string) {
@@ -94,7 +69,7 @@ export class MCPClientManager {
 
     const handleConnectionError = (err: unknown) => {
       this.#logger.error(`Error connecting to server ${serverName}:`, err)
-      this.#mcpClientsByName.delete(serverName)
+      this.#mcpClients.delete(serverName)
       return err
     }
 
@@ -104,7 +79,7 @@ export class MCPClientManager {
         .mapErr(handleConnectionError)
         .map(() => client)
 
-    const existingClient = this.#mcpClientsByName.get(serverName)
+    const existingClient = this.#mcpClients.get(serverName)
     if (existingClient) {
       this.#logger.debug(`Reusing existing connected client for server: ${serverName}`)
       return getConnectedClient(existingClient)
@@ -116,11 +91,11 @@ export class MCPClientManager {
       server: serverConfig,
       timeout: env.MCP_CACHE_TTL_MS / 2,
       onProgress: (progress) => {
-        this.#publish?.(MCPMessageChannel.Progress, progress)
+        this.emit('progress', progress)
       },
     })
-    this.#mcpClientsByName.set(serverName, client)
-    this.#clientDisposableStack.use(client)
+    this.#mcpClients.set(serverName, client)
+    this.#disposableStack.use(client)
 
     return getConnectedClient(client)
   }
@@ -161,7 +136,7 @@ export class MCPClientManager {
     return this.#getConnectedClientForServer(serverName).andThen((client) =>
       client
         .callTool({ ...params, name: toolName }, options)
-        .andTee((result) => this.#publish?.(MCPMessageChannel.ToolCallResult, result as CallToolResult)),
+        .andTee((result) => this.emit('toolCallResult', result as CallToolResult)),
     )
   }
 
@@ -221,18 +196,6 @@ export class MCPClientManager {
       ),
     )
   }
-
-  // oxlint-disable-next-line no-unused-private-class-members
-  #getSamplingHandler() {
-    const publish = this.#publish
-    if (!this.#pubsub || !publish) {
-      this.#logger.warn('PubSub not initialized, skipping sampling setup')
-      return err(new Error('PubSub not initialized'))
-    }
-    return ok((params: SamplingRequest['params']) => {
-      const subCount = publish(MCPMessageChannel.SamplingRequest, params)
-    })
-  }
 }
 
 type InternalMCPClientOptions = {
@@ -290,18 +253,19 @@ export class InternalMCPClient {
 
     const { url, headers } = this.#serverConfig
 
-    const doConnect = ResultAsync.fromThrowable(async () => {
+    const createTransport = () => {
       const transport = new StreamableHTTPClientTransport(new URL(url), {
         requestInit: { headers },
       })
       this.#transport = transport
 
-      this.#logger.debug(`Attempting Streamable HTTP connection on URL: ${url}`)
-      return this.#client.connect(transport, { timeout: 5_000 })
-    })
+      return ok(transport)
+    }
 
-    this.#isConnected = doConnect()
-      .andTee(() => {
+    this.#isConnected = createTransport()
+      .asyncAndThen((transport) => {
+        this.#logger.debug(`Attempting Streamable HTTP connection on URL: ${url}`)
+
         const originalOnClose = this.#client.onclose
         // oxlint-disable-next-line prefer-add-event-listener
         this.#client.onclose = () => {
@@ -309,6 +273,8 @@ export class InternalMCPClient {
           this.#isConnected = okAsync(false)
           originalOnClose?.()
         }
+
+        return ResultAsync.fromPromise(this.#client.connect(transport, { timeout: 5_000 }), (e) => e)
       })
       .map(() => {
         this.#logger.ready(`Connected to MCP server ${this.name} at ${url}`)
@@ -323,16 +289,22 @@ export class InternalMCPClient {
   }
 
   async [Symbol.asyncDispose]() {
+    await this.close()
+  }
+
+  close() {
     if (!this.#transport) {
       this.#logger.info('Dispose called but transport was not connected')
-      return
+      return okAsync(true)
     }
     this.#logger.debug('Disposing client and closing transport')
 
-    this.#isConnected = ResultAsync.fromPromise(this.#transport.close(), (e) => e)
-      .andTee(() => {
+    this.#isConnected = ResultAsync.fromPromise(
+      this.#transport.close().finally(() => {
         this.#transport = undefined
-      })
+      }),
+      (e) => e,
+    )
       .map(() => {
         this.#logger.debug('Transport closed successfully')
         return false
@@ -342,11 +314,7 @@ export class InternalMCPClient {
         return err
       })
 
-    await this.#isConnected
-  }
-
-  disconnect() {
-    return this[Symbol.asyncDispose]()
+    return this.#isConnected
   }
 
   listTools() {

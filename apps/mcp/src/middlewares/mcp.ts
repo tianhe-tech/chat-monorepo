@@ -54,7 +54,7 @@ const mcpMiddleware = createMiddleware(async (c, next) => {
       { url: config.url, headers: config.requestInit?.headers },
     ]),
   )
-  const newClient = await MCPClientManager.createMCPClientManager({
+  const newClient = await MCPClientManager.new({
     servers,
     pubsubOptions: {
       id: threadId,
