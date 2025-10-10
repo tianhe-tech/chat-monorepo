@@ -1,4 +1,3 @@
-import type { User } from '@repo/shared/db'
 import { createMiddleware } from 'hono/factory'
 
 const authMiddleware = createMiddleware(async (c, next) => {
@@ -13,6 +12,6 @@ export default authMiddleware
 
 declare module 'hono' {
   interface ContextVariableMap {
-    user: User
+    user: { id: string; scope: string }
   }
 }

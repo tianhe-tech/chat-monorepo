@@ -1,1 +1,0 @@
-ALTER TABLE "chat"."messages" ALTER COLUMN "thread_id" SET NOT NULL;

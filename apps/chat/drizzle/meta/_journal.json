@@ -5,22 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1758473074452,
-      "tag": "0000_slow_carlie_cooper",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1758614828912,
-      "tag": "0001_calm_patriot",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1758789672297,
-      "tag": "0002_rich_stellaris",
+      "when": 1760086559206,
+      "tag": "0000_warm_nekra",
       "breakpoints": true
     }
   ]

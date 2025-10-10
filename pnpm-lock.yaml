@@ -23,7 +23,7 @@ catalogs:
       version: 0.7.3
     '@modelcontextprotocol/sdk':
       specifier: latest
-      version: 1.19.1
+      version: 1.20.0
     ai:
       specifier: 5.0.28
       version: 5.0.28
@@ -95,7 +95,7 @@ importers:
         version: 0.7.3(hono@4.9.9)(zod@4.1.9)
       '@modelcontextprotocol/sdk':
         specifier: 'catalog:'
-        version: 1.19.1
+        version: 1.20.0
       '@repo/mcp':
         specifier: workspace:@th-chat/mcp@*
         version: link:../mcp
@@ -132,6 +132,9 @@ importers:
       ky:
         specifier: ^1.11.0
         version: 1.11.0
+      neverthrow:
+        specifier: ^8.2.0
+        version: 8.2.0
       pg:
         specifier: ^8.16.3
         version: 8.16.3
@@ -195,7 +198,7 @@ importers:
         version: 1.4.1
       '@modelcontextprotocol/sdk':
         specifier: 'catalog:'
-        version: 1.19.1
+        version: 1.20.0
       '@t3-oss/env-core':
         specifier: ^0.13.8
         version: 0.13.8(typescript@5.9.2)(zod@4.1.9)
@@ -320,7 +323,7 @@ importers:
     devDependencies:
       '@modelcontextprotocol/sdk':
         specifier: 'catalog:'
-        version: 1.19.1
+        version: 1.20.0
       '@types/pg':
         specifier: ^8.15.5
         version: 8.15.5
@@ -452,7 +455,7 @@ importers:
     devDependencies:
       '@modelcontextprotocol/sdk':
         specifier: 'catalog:'
-        version: 1.19.1
+        version: 1.20.0
       '@tailwindcss/vite':
         specifier: ^4.1.12
         version: 4.1.12(rolldown-vite@7.1.16(@types/node@22.18.0)(esbuild@0.25.9)(jiti@2.5.1)(terser@5.43.1)(tsx@4.20.5)(yaml@2.8.1))
@@ -1248,8 +1251,8 @@ packages:
   '@js-sdsl/ordered-map@4.4.2':
     resolution: {integrity: sha512-iUKgm52T8HOE/makSxjqoWhe95ZJA1/G1sYsGev2JDKUSS14KAgg1LHb+Ba+IPow0xflbnSkOsZcO08C7w1gYw==}
 
-  '@modelcontextprotocol/sdk@1.19.1':
-    resolution: {integrity: sha512-3Y2h3MZKjec1eAqSTBclATlX+AbC6n1LgfVzRMJLt3v6w0RCYgwLrjbxPDbhsYHt6Wdqc/aCceNJYgj448ELQQ==}
+  '@modelcontextprotocol/sdk@1.20.0':
+    resolution: {integrity: sha512-kOQ4+fHuT4KbR2iq2IjeV32HiihueuOf1vJkq18z08CLZ1UQrTc8BXJpVfxZkq45+inLLD+D4xx4nBjUelJa4Q==}
     engines: {node: '>=18'}
 
   '@napi-rs/wasm-runtime@0.2.12':
@@ -6767,7 +6770,7 @@ snapshots:
 
   '@js-sdsl/ordered-map@4.4.2': {}
 
-  '@modelcontextprotocol/sdk@1.19.1':
+  '@modelcontextprotocol/sdk@1.20.0':
     dependencies:
       ajv: 6.12.6
       content-type: 1.0.5
@@ -11700,7 +11703,7 @@ snapshots:
 
   vite-plugin-inspect@11.3.3(@nuxt/kit@4.0.3(magicast@0.3.5))(rolldown-vite@7.1.16(@types/node@22.18.0)(esbuild@0.25.9)(jiti@2.5.1)(terser@5.43.1)(tsx@4.20.5)(yaml@2.8.1)):
     dependencies:
-      ansis: 4.1.0
+      ansis: 4.2.0
       debug: 4.4.3
       error-stack-parser-es: 1.0.5
       ohash: 2.0.11

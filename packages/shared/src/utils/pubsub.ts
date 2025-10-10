@@ -4,45 +4,54 @@ import { consola, type ConsolaInstance } from 'consola'
 export type SubCallback<Channels extends string> = (params: { channel: Channels; message: string }) => void
 export type ValkeyAddresses = { host: string; port: number }[]
 
-export type PubSubOptions<Channels extends string> = {
+export type PubSubFactoryOptions<Channels extends string> = {
   valkeyAddresses: ValkeyAddresses
   channels: Channels[]
   subCallback: SubCallback<Channels>
   logTag?: string
 }
 
+type PubSubConstructorOptions = Pick<PubSubFactoryOptions<string>, 'logTag'> & {
+  pub: GlideClient
+  sub: GlideClient
+}
+
 export class PubSub<Channels extends string> {
   #logger: ConsolaInstance
-  #pub?: GlideClient
-  #sub?: GlideClient
+  #pub: GlideClient
+  #sub: GlideClient
 
-  protected constructor({ logTag = 'PubSub' }: Pick<PubSubOptions<Channels>, 'logTag'>) {
+  protected constructor({ logTag = 'PubSub', pub, sub }: PubSubConstructorOptions) {
     this.#logger = consola.withTag(logTag)
+    this.#pub = pub
+    this.#sub = sub
   }
 
-  static async createPubSub<Channels extends string = string>({
+  static async new<Channels extends string = string>({
     valkeyAddresses,
     subCallback,
     channels,
     logTag,
-  }: PubSubOptions<Channels>) {
-    const instance = new PubSub<Channels>({ logTag })
-    instance.#pub = await GlideClient.createClient({
-      addresses: valkeyAddresses,
-      lazyConnect: true,
-    })
-    instance.#sub = await GlideClient.createClient({
-      addresses: valkeyAddresses,
-      pubsubSubscriptions: {
-        channelsAndPatterns: {
-          [GlideClientConfiguration.PubSubChannelModes.Exact]: new Set(channels),
+  }: PubSubFactoryOptions<Channels>) {
+    const instance = new PubSub<Channels>({
+      logTag,
+      pub: await GlideClient.createClient({
+        addresses: valkeyAddresses,
+        lazyConnect: true,
+      }),
+      sub: await GlideClient.createClient({
+        addresses: valkeyAddresses,
+        pubsubSubscriptions: {
+          channelsAndPatterns: {
+            [GlideClientConfiguration.PubSubChannelModes.Exact]: new Set(channels),
+          },
+          callback: (msg) => {
+            const channel = msg.channel.toString() as Channels
+            const message = msg.message.toString()
+            subCallback({ channel, message })
+          },
         },
-        callback: (msg) => {
-          const channel = msg.channel.toString() as Channels
-          const message = msg.message.toString()
-          subCallback({ channel, message })
-        },
-      },
+      }),
     })
     return instance
   }

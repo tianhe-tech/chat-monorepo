@@ -9,7 +9,7 @@ import { db } from '../db'
 import { env } from '../env'
 import { mcpClientCache } from '../mcp/cache'
 import { MCPClientManager } from '../mcp/client'
-import { MCPClientPubSubCoordinator } from '../mcp/client-pubsub'
+import { MCPClientPubSubCoordinator } from '../mcp/pubsub'
 
 const logger = consola.withTag('MCP Middleware')
 

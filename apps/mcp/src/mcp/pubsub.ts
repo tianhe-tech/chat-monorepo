@@ -12,6 +12,7 @@ import { ResultAsync } from 'neverthrow'
 import { EventEmitter } from 'node:events'
 import { z as z3 } from 'zodv3'
 import type { MCPClientManager } from './client'
+import { colorize } from 'consola/utils'
 
 export type MCPClientPubSubCoordinatorFactoryOptions = {
   valkeyAddresses: ValkeyAddresses
@@ -24,7 +25,6 @@ type MCPClientPubSubCoordinatorConstructorOptions = Omit<
   'valkeyAddresses'
 > & {
   pubsub: PubSub<MCPMessageChannelString>
-  publish: (channel: MCPMessageChannelString, data: object) => Promise<number>
   timeout?: number
 }
 
@@ -36,17 +36,16 @@ export class MCPClientPubSubCoordinator
   }>
   implements AsyncDisposable
 {
-  readonly #logger: ConsolaInstance
-  readonly #id: string
-  readonly #manager: MCPClientManager
-  readonly #pubsub: MCPClientPubSubCoordinatorConstructorOptions['pubsub']
-  readonly #publish: MCPClientPubSubCoordinatorConstructorOptions['publish']
-  readonly #timeout: number
+  #logger: ConsolaInstance
+  #id: string
+  #manager: MCPClientManager
+  #pubsub: MCPClientPubSubCoordinatorConstructorOptions['pubsub']
+  #publish: (channel: MCPMessageChannelString, data: object) => Promise<number>
+  #timeout: number
 
   private constructor({
     id,
     clientManager,
-    publish,
     pubsub,
     timeout = 5 * 60_000,
   }: MCPClientPubSubCoordinatorConstructorOptions) {
@@ -54,37 +53,42 @@ export class MCPClientPubSubCoordinator
     this.#id = id
     this.#manager = clientManager
     this.#pubsub = pubsub
-    this.#publish = publish
     this.#logger = consola.withTag(`MCPClientPubSub:${id}`)
     this.#timeout = timeout
+
+    this.#publish = (channel, data) => pubsub.publish({ channel, message: JSON.stringify({ data, id }) })
 
     this.on('error', (err) => {
       this.#logger.error('Error event emitted:', err)
     })
+    this.#handleSamplingRequest()
+    this.#handleElicitationRequest()
+    this.#handleProgress()
+    this.#handleToolCallResult()
   }
 
   static new({ id, clientManager, valkeyAddresses }: MCPClientPubSubCoordinatorFactoryOptions) {
-    // oxlint-disable-next-line consistent-function-scoping
-    let handleSamplingResult = (_m: string) => {}
-    // oxlint-disable-next-line consistent-function-scoping
-    let handleElicitationResult = (_m: string) => {}
-    let logger = consola.withTag(`!!Uninitialized:${id}!!`)
+    let local = {
+      handleSamplingResult: (_m: string) => {},
+      handleElicitationResult: (_m: string) => {},
+      logger: consola.withTag(colorize('redBright', `!!Uninitialized:${id}!!`)),
+    }
 
     const createPubSub = ResultAsync.fromPromise(
-      PubSub.createPubSub<MCPMessageChannelString>({
+      PubSub.new<MCPMessageChannelString>({
         channels: [MCPMessageChannel.SamplingResult, MCPMessageChannel.ElicitationResult],
         valkeyAddresses,
         logTag: `MCPClientPubSub:${id}`,
         subCallback: ({ channel, message }) => {
           switch (channel) {
             case MCPMessageChannel.SamplingResult:
-              handleSamplingResult(message)
+              local.handleSamplingResult(message)
               break
             case MCPMessageChannel.ElicitationResult:
-              handleElicitationResult(message)
+              local.handleElicitationResult(message)
               break
             default:
-              logger.warn(`Unknown channel: ${channel}`)
+              local.logger.warn(`Unknown channel: ${channel}`)
               break
           }
         },
@@ -93,19 +97,13 @@ export class MCPClientPubSubCoordinator
     )
 
     return createPubSub.map((pubsub) => {
-      const publish: MCPClientPubSubCoordinatorConstructorOptions['publish'] = (channel, data) =>
-        pubsub.publish({ channel, message: JSON.stringify({ data, id }) })
-
-      const instance = new MCPClientPubSubCoordinator({ id, clientManager, pubsub, publish })
-      logger = instance.#logger
-      handleSamplingResult = instance.#handleSamplingResult
-      handleElicitationResult = instance.#handleElicitationResult
+      const instance = new MCPClientPubSubCoordinator({ id, clientManager, pubsub })
+      local = {
+        handleSamplingResult: instance.#handleSamplingResult,
+        handleElicitationResult: instance.#handleElicitationResult,
+        logger: instance.#logger,
+      }
       clientManager.useDisposable(instance)
-
-      instance.#handleSamplingRequest()
-      instance.#handleElicitationRequest()
-      instance.#handleProgress()
-      instance.#handleToolCallResult()
 
       return instance
     })

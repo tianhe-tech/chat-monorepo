@@ -1,5 +1,5 @@
 {
-  "id": "278a1e4e-96e9-4a03-809d-1e5f6f0013eb",
+  "id": "9b8adbbf-3487-4f09-b373-8651785fe5b7",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -18,7 +18,7 @@
           "name": "thread_id",
           "type": "text",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "role": {
           "name": "role",
@@ -73,7 +73,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
