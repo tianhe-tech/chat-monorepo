@@ -6,6 +6,7 @@ import {
   convertToModelMessages,
   createUIMessageStream,
   createUIMessageStreamResponse,
+  generateText,
   stepCountIs,
   streamText,
   validateUIMessages,
@@ -171,12 +172,49 @@ const chatApp = new Hono().post(
 
           const getMCPTools = createMCPService.andThen((mcpService) => mcpService.getTools())
 
+          // TODO: 可细粒度配置的工具列表
+          const setupSampling = createMCPService.andThen((mcpService) =>
+            getMCPTools.andTee((mcpTools) => {
+              mcpService.on('samplingRequest', async ({ messages, serverName, systemPrompt, includeContext }) => {
+                const includedTools = (() => {
+                  if (includeContext === 'none') {
+                    return []
+                  }
+                  if (includeContext === 'allServers') {
+                    return mcpTools
+                  }
+                  return mcpTools.filter(([toolName, tool]) => toolName.startsWith(serverName) && !tool.isEntry)
+                })()
+
+                const { text } = await generateText({
+                  model,
+                  messages: messages.map((message) => ({
+                    role: message.role,
+                    content: message.content.text as string,
+                  })),
+                  system: systemPrompt,
+                  tools: Object.fromEntries(includedTools),
+                  abortSignal: signal,
+                })
+
+                await mcpService.sendSamplingResult({
+                  model: model.modelId,
+                  content: {
+                    type: 'text',
+                    text,
+                  },
+                  role: 'assistant',
+                })
+              })
+            }),
+          )
+
           const uiMessages = await getUpdatedMessages
           if (uiMessages.isErr()) {
             throw uiMessages.error
           }
 
-          const mcpTools = await getMCPTools
+          const mcpTools = await setupSampling
           if (mcpTools.isErr()) {
             throw mcpTools.error
           }
