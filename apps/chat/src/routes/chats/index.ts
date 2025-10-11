@@ -98,13 +98,22 @@ const chatApp = new Hono().post(
             exitHook(() => mcpService.close())
           })
 
-          const getUpdatedMessages = flow
-            .getPersistedMessages()
-            .andThen((persistedMessages) =>
-              createMCPService
-                .andThen((mcpService) => flow.fulfillToolElicitation({ mcpService, newMessage: inputMessage }))
-                .andThen(() => flow.updateNewMessage({ persistedMessages, newMessage: inputMessage })),
-            )
+          const getUpdatedMessages = flow.getPersistedMessages().andThen((persistedMessages) =>
+            createMCPService
+              .andThen(
+                ResultAsync.fromThrowable(async (mcpService) => {
+                  inputMessage.parts = await Promise.all(
+                    inputMessage.parts.map(async (part) => {
+                      if (part.type !== 'dynamic-tool') {
+                        return part
+                      }
+                      return mcpService.fulfillToolElicitation(part)
+                    }),
+                  )
+                }),
+              )
+              .andThen(() => flow.updateNewMessage({ persistedMessages, newMessage: inputMessage })),
+          )
 
           const mcpTools = await createMCPService.andThen((mcpService) =>
             mcpService.getTools().andTee(() => flow.setupSampling({ mcpService, model, signal })),

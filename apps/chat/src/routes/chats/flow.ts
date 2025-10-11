@@ -1,6 +1,6 @@
 import type { LanguageModelV2 } from '@ai-sdk/provider'
 import { constructDBError } from '@repo/shared/utils'
-import { generateText } from 'ai'
+import { generateText, type DynamicToolUIPart } from 'ai'
 import { consola, type ConsolaInstance } from 'consola'
 import { eq } from 'drizzle-orm'
 import { ok, okAsync, ResultAsync } from 'neverthrow'
@@ -69,24 +69,6 @@ export class ChatsPostFlow {
     return insertThreadIfNotExist.map((thread) => {
       const dbMessages = thread?.messages ?? []
       return dbMessages.map((message) => ({ id: message.id, parts: message.content, role: message.role }))
-    })
-  }
-
-  fulfillToolElicitation(params: { mcpService: ChatMCPService; newMessage: MyUIMessage }) {
-    const { mcpService, newMessage } = params
-
-    return ResultAsync.fromPromise(
-      Promise.all(
-        newMessage.parts.map((part) => {
-          if (part.type !== 'dynamic-tool') {
-            return part
-          }
-          return mcpService.fulfillToolElicitation(part)
-        }),
-      ),
-      (e) => e,
-    ).andTee((parts) => {
-      newMessage.parts = parts
     })
   }
 
