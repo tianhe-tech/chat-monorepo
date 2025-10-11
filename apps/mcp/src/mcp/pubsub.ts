@@ -151,7 +151,7 @@ export class MCPClientPubSubCoordinator
             clearTimeout(timeout)
             resolve(data)
           }
-          this.on('samplingResult', listener)
+          this.once('samplingResult', listener)
         })
       }),
     )
@@ -179,7 +179,7 @@ export class MCPClientPubSubCoordinator
             this.#logger.debug('sending elicitation result', data)
             resolve(data)
           }
-          this.on('elicitationResult', listener)
+          this.once('elicitationResult', listener)
         })
       }),
     )

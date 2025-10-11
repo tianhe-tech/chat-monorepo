@@ -9,9 +9,6 @@ catalogs:
     '@ai-sdk/provider':
       specifier: 2.0.0
       version: 2.0.0
-    '@ai-sdk/vue':
-      specifier: 2.0.28
-      version: 2.0.28
     '@dotenvx/dotenvx':
       specifier: ^1.51.0
       version: 1.51.0
@@ -30,9 +27,6 @@ catalogs:
     hono:
       specifier: ^4.9.9
       version: 4.9.9
-    reka-ui:
-      specifier: ^2.5.0
-      version: 2.5.1
     zod:
       specifier: ^4.1.9
       version: 4.1.9
@@ -141,7 +135,7 @@ importers:
       zod:
         specifier: 'catalog:'
         version: 4.1.9
-      zod3:
+      zodv3:
         specifier: npm:zod@^3.25.76
         version: zod@3.25.76
     devDependencies:

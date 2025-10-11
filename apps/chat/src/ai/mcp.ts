@@ -22,7 +22,7 @@ import ky from 'ky'
 import { err, ok, Result, ResultAsync } from 'neverthrow'
 import assert from 'node:assert'
 import EventEmitter from 'node:events'
-import { z as z3 } from 'zod3'
+import { z as z3 } from 'zodv3'
 import { env } from '../env'
 import type { MyUIMessage } from './types'
 
@@ -98,7 +98,7 @@ export class ChatMCPService
       PubSub.new<MCPMessageChannelString>({
         channels: [
           MCPMessageChannel.SamplingRequest,
-          MCPMessageChannel.SamplingRequest,
+          MCPMessageChannel.ElicitationRequest,
           MCPMessageChannel.Progress,
           MCPMessageChannel.ToolCallResult,
         ],
@@ -220,9 +220,13 @@ export class ChatMCPService
     return this.#sendElicitationResult({ action: _confirm }).match(
       () =>
         new Promise<DynamicToolUIPart>((resolve, reject) => {
-          setTimeout(() => reject(new Error('Tool call timed out')), 10_000)
+          const toolResultHandler = ({
+            content,
+            isError,
+            progressToken,
+          }: CallToolResult & { progressToken?: string }) => {
+            clearTimeout(timeout)
 
-          this.on('toolCallResult', ({ content, isError, progressToken }) => {
             if (progressToken !== part.toolCallId) {
               this.#logger.warn(`Mismatched tool call id: expected ${part.toolCallId} but got ${progressToken}`)
               const errorText = 'Internal Tool state error'
@@ -273,7 +277,14 @@ export class ChatMCPService
               state: 'output-available',
               output: result.value,
             })
-          })
+          }
+
+          const timeout = setTimeout(() => {
+            reject(new Error('Tool call timed out'))
+            this.off('toolCallResult', toolResultHandler)
+          }, 10_000)
+
+          this.once('toolCallResult', toolResultHandler)
         }),
       () => ({
         ...part,

@@ -61,8 +61,8 @@ const configsApp = new Hono()
       )
 
       const result = await createConfig.andTee(() => {
-        const key = `${user.id}:${user.scope}`
-        mcpClientCache.delete(key)
+        // Invalidate all threadId-based MCP client cache entries since we don't track which threads belong to this user
+        mcpClientCache.clear()
       })
 
       if (result.isErr()) {
@@ -200,9 +200,8 @@ const configsApp = new Hono()
       )
 
       const result = await doUpdate.andTee(() => {
-        // Invalidate MCP client cache
-        const key = `${user.id}:${user.scope}`
-        mcpClientCache.delete(key)
+        // Invalidate all threadId-based MCP client cache entries on config change
+        mcpClientCache.clear()
       })
 
       if (result.isErr()) {
@@ -261,8 +260,8 @@ const configsApp = new Hono()
     )
 
     const result = await doDelete.andTee(() => {
-      const key = `${user.id}:${user.scope}`
-      mcpClientCache.delete(key)
+      // Invalidate all threadId-based MCP client cache entries on deletion
+      mcpClientCache.clear()
     })
 
     if (result.isErr()) {

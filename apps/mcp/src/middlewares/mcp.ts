@@ -76,7 +76,8 @@ const mcpMiddleware = createMiddleware(async (c, next) => {
 
   await next()
 
-  c.get(threadId) // refresh ttl
+  // Refresh TTL for this threadId-based cache entry
+  mcpClientCache.get(threadId)
 })
 
 export default mcpMiddleware
