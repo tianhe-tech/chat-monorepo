@@ -1,4 +1,3 @@
-import type { LanguageModelV2 } from '@ai-sdk/provider'
 import {
   CallToolResultSchema,
   ElicitRequestSchema,
@@ -22,22 +21,10 @@ import { colorize } from 'consola/utils'
 import ky from 'ky'
 import { err, ok, Result, ResultAsync } from 'neverthrow'
 import assert from 'node:assert'
-import { AsyncLocalStorage } from 'node:async_hooks'
 import EventEmitter from 'node:events'
 import { z as z3 } from 'zod3'
 import { env } from '../env'
-import type { convertMCPToolToAITool } from './tool'
 import type { MyUIMessage } from './types'
-
-export type ChatMCPContext = {
-  currentToolCallId?: string
-  writer?: UIMessageStreamWriter<MyUIMessage>
-  model: LanguageModelV2
-  abort: () => void
-  mcpTools: ReturnType<typeof convertMCPToolToAITool>[]
-}
-
-export const chatMCPContext = new AsyncLocalStorage<ChatMCPContext>()
 
 type ChatMCPServiceConstructorOptions = {
   threadId: string
