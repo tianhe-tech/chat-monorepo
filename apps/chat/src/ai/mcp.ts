@@ -1,33 +1,33 @@
 import type { LanguageModelV2 } from '@ai-sdk/provider'
-import { dynamicTool, jsonSchema, type DynamicToolUIPart, type ToolUIPart, type UIMessageStreamWriter } from 'ai'
-import type { convertMCPToolToAITool } from './tool'
-import type { MyUIMessage } from './types'
-import { AsyncLocalStorage } from 'node:async_hooks'
 import {
-  type CallToolResult,
+  CallToolResultSchema,
+  ElicitRequestSchema,
+  ProgressSchema,
+  CreateMessageRequestSchema as SamplingRequestSchema,
   type CallToolRequest,
+  type CallToolResult,
+  type ElicitRequest,
+  type ElicitResult,
   type Tool as MCPTool,
+  type Progress,
   type CreateMessageRequest as SamplingRequest,
   type CreateMessageResult as SamplingResult,
-  type ElicitRequest,
-  type Progress,
-  ElicitRequestSchema,
-  CreateMessageRequestSchema as SamplingRequestSchema,
-  ProgressSchema,
-  CallToolResultSchema,
-  type ElicitResult,
 } from '@modelcontextprotocol/sdk/types.js'
-import ky from 'ky'
-import { env } from '../env'
-import { err, ok, Result, ResultAsync } from 'neverthrow'
-import { consola, type ConsolaInstance } from 'consola'
-import assert from 'node:assert'
 import type { ToolConfirmInput } from '@repo/shared/ai'
-import EventEmitter from 'node:events'
-import { z as z3 } from 'zod3'
 import { MCPMessageChannel, type MCPMessageChannelString } from '@repo/shared/types'
 import { PubSub } from '@repo/shared/utils'
+import { dynamicTool, jsonSchema, type DynamicToolUIPart, type UIMessageStreamWriter } from 'ai'
+import { consola, type ConsolaInstance } from 'consola'
 import { colorize } from 'consola/utils'
+import ky from 'ky'
+import { err, ok, Result, ResultAsync } from 'neverthrow'
+import assert from 'node:assert'
+import { AsyncLocalStorage } from 'node:async_hooks'
+import EventEmitter from 'node:events'
+import { z as z3 } from 'zod3'
+import { env } from '../env'
+import type { convertMCPToolToAITool } from './tool'
+import type { MyUIMessage } from './types'
 
 export type ChatMCPContext = {
   currentToolCallId?: string
@@ -230,7 +230,7 @@ export class ChatMCPService
       return part
     }
 
-    return await this.#sendElicitationResult({ action: _confirm }).match(
+    return this.#sendElicitationResult({ action: _confirm }).match(
       () =>
         new Promise<DynamicToolUIPart>((resolve, reject) => {
           setTimeout(() => reject(new Error('Tool call timed out')), 10_000)
