@@ -1,6 +1,6 @@
 import type { LanguageModelV2 } from '@ai-sdk/provider'
 import { constructDBError } from '@repo/shared/utils'
-import { generateText, type DynamicToolUIPart } from 'ai'
+import { generateText } from 'ai'
 import { consola, type ConsolaInstance } from 'consola'
 import { eq } from 'drizzle-orm'
 import { ok, okAsync, ResultAsync } from 'neverthrow'

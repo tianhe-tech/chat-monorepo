@@ -1,9 +1,9 @@
 import type { LanguageModelV2 } from '@ai-sdk/provider'
 import { ok, okAsync } from 'neverthrow'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import type { MyUIMessage } from '../../../src/ai/types'
-import * as dbSchema from '../../../src/db/schema'
-import { ChatsPostFlow } from '../../../src/routes/chats/flow'
+import type { MyUIMessage } from '../../ai/types'
+import * as dbSchema from '../../db/schema'
+import { ChatsPostFlow } from './flow'
 
 type ValuesMock = ReturnType<typeof vi.fn>
 type UpdateChainMock = { set: ValuesMock; where: ValuesMock }
