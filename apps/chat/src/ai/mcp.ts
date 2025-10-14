@@ -12,8 +12,7 @@ import {
   type CreateMessageRequest as SamplingRequest,
   type CreateMessageResult as SamplingResult,
 } from '@modelcontextprotocol/sdk/types.js'
-import type { ToolConfirmInput } from '@repo/shared/ai'
-import { MCPMessageChannel, type MCPMessageChannelString } from '@repo/shared/types'
+import { isElicitationResponse, MCPMessageChannel, UIPartBrands, type MCPMessageChannelString } from '@repo/shared/types'
 import { PubSub } from '@repo/shared/utils'
 import { dynamicTool, jsonSchema, type DynamicToolUIPart, type UIMessageStreamWriter } from 'ai'
 import { consola, type ConsolaInstance } from 'consola'
@@ -53,8 +52,7 @@ export class ChatMCPService
     toolCallResult: [CallToolResult & { progressToken?: string }]
     error: unknown[]
   }>
-  implements AsyncDisposable
-{
+  implements AsyncDisposable {
   #logger: ConsolaInstance
   #threadId: string
   #signal: AbortSignal
@@ -87,10 +85,10 @@ export class ChatMCPService
 
   static new({ signal, threadId, valkeyAddresses, abort, writer }: ChatMCPServiceFactoryOptions) {
     let local = {
-      handleSamplingRequest: (_m: string) => {},
-      handleElicitationRequest: (_m: string) => {},
-      handleProgress: (_m: string) => {},
-      handleToolCallResult: (_m: string) => {},
+      handleSamplingRequest: (_m: string) => { },
+      handleElicitationRequest: (_m: string) => { },
+      handleProgress: (_m: string) => { },
+      handleToolCallResult: (_m: string) => { },
       logger: consola.withTag(colorize('redBright', `!!Uninitialized:${threadId}!!`)),
     }
 
@@ -207,17 +205,15 @@ export class ChatMCPService
   async fulfillToolElicitation(part: DynamicToolUIPart): Promise<DynamicToolUIPart> {
     assert.ok(part.type === 'dynamic-tool')
 
-    if (part.state !== 'input-available') {
+    const output = part.output
+
+    if (!isElicitationResponse(output)) {
       return part
     }
 
-    const { _confirm } = part.input as ToolConfirmInput
-    if (!_confirm) {
-      this.#logger.warn('Invalid tool state: input-available but no _confirm field')
-      return part
-    }
+    const elicitationResponse = output[UIPartBrands.ElicitationResponse]
 
-    return this.#sendElicitationResult({ action: _confirm }).match(
+    return this.#sendElicitationResult(elicitationResponse).match(
       () =>
         new Promise<DynamicToolUIPart>((resolve, reject) => {
           const toolResultHandler = ({
@@ -240,6 +236,7 @@ export class ChatMCPService
                 ...part,
                 state: 'output-error',
                 errorText,
+                output: undefined,
               })
             }
 
@@ -269,13 +266,19 @@ export class ChatMCPService
                 ...part,
                 state: 'output-error',
                 errorText: result.value,
+                output: undefined,
               })
             }
 
+            const { toolCallId, input, toolName, type } = part
+
             resolve({
-              ...part,
+              type,
               state: 'output-available',
               output: result.value,
+              toolCallId,
+              input,
+              toolName
             })
           }
 
@@ -290,6 +293,7 @@ export class ChatMCPService
         ...part,
         state: 'output-error',
         errorText: 'Internal tool state error',
+        output: undefined,
       }),
     )
   }
@@ -321,7 +325,9 @@ export class ChatMCPService
           inputSchema: jsonSchema(mcpTool.inputSchema as any),
           description: mcpTool.description,
           execute: async (input, { toolCallId }) => {
+            const prevToolCallId = this.#currentToolCallId
             this.#currentToolCallId = toolCallId
+            new DisposableStack().defer(() => this.#currentToolCallId = prevToolCallId)
 
             const result = await this.callTool({
               name: mcpTool.name,
@@ -451,7 +457,7 @@ export class ChatMCPService
   }
 
   #handleElicitationRequest = () => {
-    this.on('elicitationRequest', async ({ message, requestedSchema }) => {
+    this.on('elicitationRequest', async (request) => {
       if (!this.#currentToolCallId) {
         this.#logger.warn('Received elicitation request outside of tool call, cancelling')
         await this.#sendElicitationResult({ action: 'cancel' })
@@ -460,13 +466,12 @@ export class ChatMCPService
 
       this.#logger.debug('elicitationRequest event received, aborting stream')
       this.#streamWriter.write({
-        type: 'data-aborted-tool',
-        transient: false,
-        data: {
-          abortReason: 'elicit',
-          toolCallId: this.#currentToolCallId,
-          toolType: 'mcp',
+        type: 'tool-output-available',
+        toolCallId: this.#currentToolCallId!,
+        output: {
+          [UIPartBrands.ElicitationRequest]: request,
         },
+        dynamic: true,
       })
 
       this.#abort()

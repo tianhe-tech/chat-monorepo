@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach, vi } from 'vitest'
-import { MCPMessageChannel } from '@repo/shared/types'
+import { MCPMessageChannel, UIPartBrands } from '@repo/shared/types'
 import { ChatMCPService } from './mcp'
 
 const { kyCreateMock, dynamicToolMock, jsonSchemaMock } = vi.hoisted(() => {
@@ -213,9 +213,13 @@ describe('ChatMCPService', () => {
 
       const part = {
         type: 'dynamic-tool',
-        state: 'input-available',
+        state: 'output-available',
         toolCallId: 'call-1',
+        toolName: 'sample-tool',
         input: { _confirm: 'confirm' },
+        output: {
+          [UIPartBrands.ElicitationResponse]: { action: 'confirm' },
+        },
       } as const
 
       const promise = service.fulfillToolElicitation(part as any)
@@ -249,9 +253,13 @@ describe('ChatMCPService', () => {
 
       const part = {
         type: 'dynamic-tool',
-        state: 'input-available',
+        state: 'output-available',
         toolCallId: 'call-1',
+        toolName: 'sample-tool',
         input: { _confirm: 'confirm' },
+        output: {
+          [UIPartBrands.ElicitationResponse]: { action: 'confirm' },
+        },
       } as const
 
       const promise = service.fulfillToolElicitation(part as any)
