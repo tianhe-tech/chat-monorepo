@@ -10,7 +10,6 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "packageManager": "pnpm@10.15.0",
   "dependencies": {
     "@dotenvx/dotenvx": "catalog:",
     "@tsconfig/node22": "^22.0.2"

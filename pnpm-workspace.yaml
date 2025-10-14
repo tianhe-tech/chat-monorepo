@@ -6,13 +6,12 @@ packages:
 catalog:
   '@ai-sdk/openai-compatible': ^1.0.15
   '@ai-sdk/provider': 2.0.0
-  '@ai-sdk/vue': 2.0.28
+  '@ai-sdk/vue': 2.0.68
   '@dotenvx/dotenvx': ^1.51.0
   '@hono/node-server': ^1.19.4
   '@hono/zod-validator': ^0.7.3
-  '@mastra/core': ^0.16.3
-  '@modelcontextprotocol/sdk': latest
-  ai: 5.0.28
+  '@modelcontextprotocol/sdk': ^1.20.0
+  ai: 5.0.68
   hono: ^4.9.9
   reka-ui: ^2.5.0
   zod: ^4.1.9

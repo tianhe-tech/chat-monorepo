@@ -12,11 +12,11 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "packageManager": "pnpm@10.14.0",
   "devDependencies": {
     "@ai-sdk/vue": "catalog:",
     "tsdown": "^0.14.1",
     "unplugin-vue": "^7.0.1",
+    "vue": "^3.5.22",
     "vue-tsc": "^3.0.5"
   },
   "module": "./dist/index.js",
@@ -32,7 +32,8 @@
     }
   },
   "peerDependencies": {
-    "@ai-sdk/vue": "catalog:"
+    "@ai-sdk/vue": "catalog:",
+    "vue": "^3.5.22"
   },
   "dependencies": {
     "@dotenvx/dotenvx": "catalog:",
