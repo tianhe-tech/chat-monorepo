@@ -7,8 +7,8 @@
 sequenceDiagram
     autonumber
     participant FE as Frontend
-    participant Chat as Chat Service\n(Route + ALS + mcpMiddleware)
-    participant MCP as MCP Service\n(mcpMiddleware + MCPClientManager)
+    participant Chat as Chat Service<br>(Route + ALS + mcpMiddleware)
+    participant MCP as MCP Service<br>(mcpMiddleware + MCPClientManager)
     participant Broker as MCP MessageBroker
     participant PubSub as Valkey Pub/Sub
     participant MCPC as Internal MCP Client
@@ -30,7 +30,7 @@ sequenceDiagram
     MCP-->>Chat: { serverName: Tool[] }
     Chat->>Chat: Convert -> AI tool map (prefixed names)
     Chat->>Chat: setup MCP event handlers (Valkey sub)
-    Note over Chat,PubSub: Subscribed channels:\n sampling:request/result\n elicitation:request/result\n progress, toolcall:result
+    Note over Chat,PubSub: Subscribed channels:<br> sampling:request/result<br> elicitation:request/result<br> progress, toolcall:result
 
     Chat->>Chat: Start streamText (LLM) with tools
     Note over Chat: Streaming tokens to FE
