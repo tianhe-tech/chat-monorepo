@@ -30,11 +30,12 @@ export const UIPartBrands = {
   ElicitationResponse: '__elicitation_response',
 } as const
 
-export function isElicitationRequest(val: unknown): val is { [UIPartBrands.ElicitationRequest]: ElicitRequest } {
+export function isElicitationRequest(
+  val: unknown,
+): val is { [UIPartBrands.ElicitationRequest]: ElicitRequest['params'] } {
   return typeof val === 'object' && val !== null && UIPartBrands.ElicitationRequest in val
 }
 
 export function isElicitationResponse(val: unknown): val is { [UIPartBrands.ElicitationResponse]: ElicitResult } {
   return typeof val === 'object' && val !== null && UIPartBrands.ElicitationResponse in val
 }
-

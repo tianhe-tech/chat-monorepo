@@ -1,0 +1,7 @@
+{
+  "extends": "@vue/tsconfig/tsconfig.dom.json",
+  "compilerOptions": {
+    "allowArbitraryExtensions": true,
+    "lib": ["es2022", "DOM", "DOM.Iterable"]
+  }
+}

@@ -14,9 +14,11 @@
     "ai": "catalog:",
     "consola": "^3.4.2",
     "drizzle-orm": "^0.44.5",
+    "neverthrow": "catalog:",
     "pg": "^8.16.3",
     "tsdown": "^0.14.1",
-    "zod": "catalog:"
+    "zod": "catalog:",
+    "zod-from-json-schema": "^0.5.0"
   },
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -29,7 +31,9 @@
     "@valkey/valkey-glide": "^2.1.0",
     "consola": "^3.4.2",
     "drizzle-orm": "^0.44.5",
+    "neverthrow": "catalog:",
     "pg": "^8.16.3",
-    "zod": "catalog:"
+    "zod": "catalog:",
+    "zod-from-json-schema": "^0.5.0"
   }
 }

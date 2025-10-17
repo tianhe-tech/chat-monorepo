@@ -7,7 +7,7 @@
     "node": "^20.19.0 || >=22.12.0"
   },
   "scripts": {
-    "dev": "vite",
+    "dev": "[ -n \"$chrome\" ] && export BROWSER=\"$chrome\"; vite",
     "build": "run-p type-check \"build-only {@}\" --",
     "preview": "vite preview",
     "build-only": "vite build",
@@ -21,7 +21,7 @@
     "@ai-sdk/vue": "catalog:",
     "@crazydos/vue-markdown": "^1.1.4",
     "@dotenvx/dotenvx": "catalog:",
-    "@nuxt/ui": "^3.3.2",
+    "@nuxt/ui": "^4.0.1",
     "@repo/design": "workspace:@th-chat/design@*",
     "@repo/shared": "workspace:@th-chat/shared@*",
     "@repo/vue": "workspace:@th-chat/vue@*",

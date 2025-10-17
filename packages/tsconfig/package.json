@@ -5,13 +5,14 @@
   "description": "",
   "type": "module",
   "exports": {
-    "./node.tsconfig.json": "./node.tsconfig.json"
+    "./node.tsconfig.json": "./node.tsconfig.json",
+    "./vue.tsconfig.json": "./vue.tsconfig.json"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "dependencies": {
-    "@dotenvx/dotenvx": "catalog:",
-    "@tsconfig/node22": "^22.0.2"
+  "devDependencies": {
+    "@tsconfig/node24": "^24.0.1",
+    "@vue/tsconfig": "^0.7.0"
   }
 }

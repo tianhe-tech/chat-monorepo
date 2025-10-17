@@ -37,6 +37,7 @@
   },
   "dependencies": {
     "@dotenvx/dotenvx": "catalog:",
-    "ai": "catalog:"
+    "ai": "catalog:",
+    "neverthrow": "catalog:"
   }
 }

@@ -337,8 +337,6 @@ export class ChatMCPService
               },
             })
 
-            this.#currentToolCallId = undefined
-
             if (result.isErr()) {
               throw result.error
             }

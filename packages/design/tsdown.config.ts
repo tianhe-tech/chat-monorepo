@@ -3,7 +3,10 @@ import vue from 'unplugin-vue/rolldown'
 
 export default defineConfig({
   entry: ['src/index.ts', 'src/theme/index.ts'],
-  platform: 'neutral',
+  alias: {
+    '@': './src',
+  },
+  platform: 'browser',
   dts: {
     vue: true,
   },
