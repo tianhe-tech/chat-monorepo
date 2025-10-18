@@ -136,7 +136,7 @@ export class MCPClientManager extends EventEmitter<{
     return this.#getConnectedClientForServer(serverName).andThen((client) =>
       client
         .callTool({ ...params, name: toolName }, options)
-        .andTee((result) => this.emit('toolCallResult', result as CallToolResult)),
+        .andTee((result) => this.emit('toolCallResult', { ...result, _meta: params._meta } as CallToolResult)),
     )
   }
 
@@ -339,7 +339,7 @@ export class InternalMCPClient {
 
   callTool(params: CallToolRequest['params'], options?: { signal?: AbortSignal }) {
     return this.connect()
-      .map(() => {
+      .andTee(() => {
         this.#logger.debug(`Calling tool ${params.name}`, { params })
       })
       .andThen(

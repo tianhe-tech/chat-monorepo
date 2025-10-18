@@ -2,7 +2,7 @@ import { defineConfig } from 'tsdown'
 import vue from 'unplugin-vue/rolldown'
 
 export default defineConfig({
-  entry: ['src/index.ts', 'src/theme/index.ts'],
+  entry: 'src/**/index.ts',
   alias: {
     '@': './src',
   },
@@ -14,6 +14,13 @@ export default defineConfig({
   copy: {
     from: 'src/index.css',
     to: 'dist/index.css',
+  },
+  exports: {
+    devExports: true,
+    customExports(exports, context) {
+      exports['.'] = { style: context.isPublish ? './dist/index.css' : './src/index.css' }
+      return exports
+    },
   },
   plugins: [vue()],
 })

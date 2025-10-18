@@ -19,7 +19,7 @@
       new Chat<MyUIMessage>({
         id: id.value,
         transport: new DefaultChatTransport({
-          api: '/api/chat',
+          api: '/api/chats',
           prepareSendMessagesRequest: ({ body, messages }) => ({
             body: {
               ...body,
@@ -41,7 +41,7 @@
 
 <template>
   <ChatProvider :chat="chat">
-    <div :class="ui.thread.base({ class: 'h-screen' })">
+    <div :class="ui.thread.container({ class: 'h-screen' })">
       <div class="flex items-center justify-center gap-8">
         Thread ID: {{ id }}
         <UButton size="sm" @click="id = uuid()"> New Chat </UButton>
@@ -49,7 +49,7 @@
       <div :class="ui.thread.body({ class: 'p-5' })">
         <div v-for="message in chat.messages" :key="message.id" :class="ui.message.container({ role: message.role })">
           <ChatMessageRoot :message="message">
-            <ChatMessageAssistantParts v-if="message.role === 'assistant'" />
+            <ChatMessageAssistantParts :parts="message.parts" v-if="message.role === 'assistant'" />
             <ChatMessageUserParts v-else-if="message.role === 'user'" />
           </ChatMessageRoot>
         </div>

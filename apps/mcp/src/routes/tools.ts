@@ -49,6 +49,7 @@ const toolsApp = new Hono()
       const params = c.req.valid('json')
       const result = await mcpClient.callTool(params, { signal: c.req.raw.signal })
       if (result.isErr()) {
+        console.error(result.error)
         throw new HTTPException(500)
       }
       return c.json(result.value)

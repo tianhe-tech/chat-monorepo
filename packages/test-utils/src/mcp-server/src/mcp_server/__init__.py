@@ -26,7 +26,7 @@ async def echo(text: str) -> str:
     return text
 
 
-@mcp.tool
+@mcp.tool(meta={'isEntry': True})
 async def sampling(
     prompt: str,
     ctx: Context,
@@ -52,7 +52,7 @@ async def elicitation(
     """Run an elicitation flow to collect a minimal preference payload."""
 
     intro = f'Help select between two lightweight options for testing purposes. Topic: {topic}.'
-    result = await ctx.elicit(intro, response_type=PreferenceSurvey)
+    result = await ctx.elicit(intro, response_type=None)
 
     if result.action != 'accept':
         return {'status': result.action}
@@ -60,8 +60,6 @@ async def elicitation(
     preference = result.data
     return {
         'status': 'accept',
-        'choice': preference.preferred_option,
-        'rationale': preference.rationale,
     }
 
 

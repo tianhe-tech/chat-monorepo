@@ -12,7 +12,12 @@ import {
   type CreateMessageRequest as SamplingRequest,
   type CreateMessageResult as SamplingResult,
 } from '@modelcontextprotocol/sdk/types.js'
-import { isElicitationResponse, MCPMessageChannel, UIPartBrands, type MCPMessageChannelString } from '@repo/shared/types'
+import {
+  isElicitationResponse,
+  MCPMessageChannel,
+  UIPartBrands,
+  type MCPMessageChannelString,
+} from '@repo/shared/types'
 import { PubSub } from '@repo/shared/utils'
 import { dynamicTool, jsonSchema, type DynamicToolUIPart, type UIMessageStreamWriter } from 'ai'
 import { consola, type ConsolaInstance } from 'consola'
@@ -52,7 +57,8 @@ export class ChatMCPService
     toolCallResult: [CallToolResult & { progressToken?: string }]
     error: unknown[]
   }>
-  implements AsyncDisposable {
+  implements AsyncDisposable
+{
   #logger: ConsolaInstance
   #threadId: string
   #signal: AbortSignal
@@ -85,10 +91,10 @@ export class ChatMCPService
 
   static new({ signal, threadId, valkeyAddresses, abort, writer }: ChatMCPServiceFactoryOptions) {
     let local = {
-      handleSamplingRequest: (_m: string) => { },
-      handleElicitationRequest: (_m: string) => { },
-      handleProgress: (_m: string) => { },
-      handleToolCallResult: (_m: string) => { },
+      handleSamplingRequest: (_m: string) => {},
+      handleElicitationRequest: (_m: string) => {},
+      handleProgress: (_m: string) => {},
+      handleToolCallResult: (_m: string) => {},
       logger: consola.withTag(colorize('redBright', `!!Uninitialized:${threadId}!!`)),
     }
 
@@ -206,12 +212,14 @@ export class ChatMCPService
     assert.ok(part.type === 'dynamic-tool')
 
     const output = part.output
+    this.#logger.debug('Fulfilling tool elicitation for part:', part)
 
     if (!isElicitationResponse(output)) {
       return part
     }
 
     const elicitationResponse = output[UIPartBrands.ElicitationResponse]
+    this.#logger.debug('ElicitationResponse', elicitationResponse)
 
     return this.#sendElicitationResult(elicitationResponse).match(
       () =>
@@ -219,9 +227,11 @@ export class ChatMCPService
           const toolResultHandler = ({
             content,
             isError,
-            progressToken,
-          }: CallToolResult & { progressToken?: string }) => {
+            _meta,
+          }: CallToolResult & { _meta?: { progressToken?: string } }) => {
             clearTimeout(timeout)
+
+            const progressToken = _meta?.progressToken
 
             if (progressToken !== part.toolCallId) {
               this.#logger.warn(`Mismatched tool call id: expected ${part.toolCallId} but got ${progressToken}`)
@@ -272,13 +282,19 @@ export class ChatMCPService
 
             const { toolCallId, input, toolName, type } = part
 
+            this.#streamWriter.write({
+              type: 'tool-output-available',
+              toolCallId: part.toolCallId,
+              dynamic: true,
+              output: result.value,
+            })
             resolve({
               type,
               state: 'output-available',
               output: result.value,
               toolCallId,
               input,
-              toolName
+              toolName,
             })
           }
 
@@ -327,7 +343,7 @@ export class ChatMCPService
           execute: async (input, { toolCallId }) => {
             const prevToolCallId = this.#currentToolCallId
             this.#currentToolCallId = toolCallId
-            new DisposableStack().defer(() => this.#currentToolCallId = prevToolCallId)
+            new DisposableStack().defer(() => (this.#currentToolCallId = prevToolCallId))
 
             const result = await this.callTool({
               name: mcpTool.name,
@@ -354,7 +370,10 @@ export class ChatMCPService
       data: parsed,
       error,
     } = z3
-      .object({ id: z3.string(), data: CallToolResultSchema.extend({ progressToken: z3.optional(z3.string()) }) })
+      .object({
+        id: z3.string(),
+        data: CallToolResultSchema,
+      })
       .safeParse(JSON.parse(message))
     if (!success) {
       const m = 'Invalid tool call result received'

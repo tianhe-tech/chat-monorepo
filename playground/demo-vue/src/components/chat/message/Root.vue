@@ -29,7 +29,7 @@
 </script>
 
 <template>
-  <div :class="ui.group({ role: message.role })">
+  <div :class="ui.parts({ role: message.role })">
     <slot />
   </div>
 </template>

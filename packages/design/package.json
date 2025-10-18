@@ -14,6 +14,7 @@
     "@iconify-json/devicon": "^1.2.43",
     "@iconify-json/vscode-icons": "^1.2.30",
     "@repo/tsconfig": "workspace:@th-chat/tsconfig@*",
+    "@vueuse/core": "^13.9.0",
     "ai": "catalog:",
     "tailwind-merge": "^3.3.1",
     "tailwindcss": "^4.1.11",
@@ -25,30 +26,41 @@
     "vue": "^3.5.0"
   },
   "dependencies": {
+    "@crazydos/vue-markdown": "^1.1.4",
     "@dotenvx/dotenvx": "catalog:",
+    "rehype-katex": "^7.0.1",
     "reka-ui": "catalog:",
+    "remark-gfm": "^4.0.1",
+    "remark-math": "^6.0.0",
     "tailwind-variants": "^2.1.0"
   },
   "publishConfig": {
     "exports": {
+      "./components/markdown": "./dist/components/markdown/index.js",
+      "./components/message": "./dist/components/message/index.js",
+      "./components/thread": "./dist/components/thread/index.js",
+      "./theme": "./dist/theme/index.js",
+      "./package.json": "./package.json",
       ".": {
-        "import": "./dist/index.mjs",
         "style": "./dist/index.css"
-      },
-      "./theme": "./dist/theme/index.mjs"
+      }
     }
   },
   "main": "./dist/index.mjs",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.mts",
   "exports": {
+    "./components/markdown": "./src/components/markdown/index.ts",
+    "./components/message": "./src/components/message/index.ts",
+    "./components/thread": "./src/components/thread/index.ts",
+    "./theme": "./src/theme/index.ts",
+    "./package.json": "./package.json",
     ".": {
-      "import": "./src/index.ts",
       "style": "./src/index.css"
-    },
-    "./theme": "./src/theme/index.ts"
+    }
   },
   "peerDependencies": {
+    "@vueuse/core": "^13.9.0",
     "tailwind-merge": "^3.3.1",
     "vue": "^3.5.0"
   }

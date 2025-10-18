@@ -19,7 +19,6 @@
 <script setup lang="ts">
   import { Primitive, type PrimitiveProps } from 'reka-ui'
   import { inject, provide, useAttrs, type InjectionKey } from 'vue'
-  import { twMerge } from 'tailwind-merge'
   import _ui from './ui'
 
   const { message, ...props } = defineProps<MessageContainerProps>()
@@ -30,7 +29,7 @@
 </script>
 
 <template>
-  <Primitive v-bind="{ ...props, ...attrs }" :class="twMerge(ui.container(), className)">
+  <Primitive v-bind="{ ...props, ...attrs }" :class="ui.container({ className })">
     <slot />
   </Primitive>
 </template>

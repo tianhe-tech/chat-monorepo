@@ -1,6 +1,6 @@
 import { createDeepSeek } from '@ai-sdk/deepseek'
 import { zValidator } from '@hono/zod-validator'
-import { abortedToolDataSchema, progressDataSchema, threadTitleDataSchema } from '@repo/shared/ai'
+import { abortedToolDataSchema, progressDataSchema, threadTitleDataSchema } from '@repo/shared/types'
 import {
   convertToModelMessages,
   createUIMessageStream,
@@ -88,7 +88,7 @@ const chatApp = new Hono().post(
         },
         async execute({ writer }) {
           const createMCPService = ChatMCPService.new({
-            signal,
+            signal: c.req.raw.signal,
             threadId,
             valkeyAddresses: env.VALKEY_ADDRESSES,
             abort: () => abortController.abort(),
@@ -127,6 +127,11 @@ const chatApp = new Hono().post(
           if (uiMessages.isErr()) {
             throw uiMessages.error
           }
+
+          logger.debug(
+            'Starting to stream assistant message...',
+            inspect({ uiMessages: uiMessages.value }, { depth: Infinity }),
+          )
 
           const stream = streamText({
             model,
