@@ -69,7 +69,9 @@ const chatApp = new Hono().post(
     const { threadId } = body
 
     const abortController = new AbortController()
-    const signal = AbortSignal.any([c.req.raw.signal, abortController.signal])
+    const reqSignal = c.req.raw.signal
+    const abortSignal = abortController.signal
+    const signal = AbortSignal.any([reqSignal, abortSignal])
 
     const flow = new ChatsPostFlow({ threadId, user })
 
@@ -88,7 +90,7 @@ const chatApp = new Hono().post(
         },
         async execute({ writer }) {
           const createMCPService = ChatMCPService.new({
-            signal: c.req.raw.signal,
+            signal: reqSignal,
             threadId,
             valkeyAddresses: env.VALKEY_ADDRESSES,
             abort: () => abortController.abort(),

@@ -13,7 +13,5 @@ declare module 'vue' {
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     UApp: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.0.1_@babel+parser@7.28.4_@netlify+blobs@9.1.2_@upstash+redis@1.35.3_axios@1._a4654a37f9c626ba0b04364f8150bea3/node_modules/@nuxt/ui/dist/runtime/components/App.vue')['default']
-    UButton: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.0.1_@babel+parser@7.28.4_@netlify+blobs@9.1.2_@upstash+redis@1.35.3_axios@1._a4654a37f9c626ba0b04364f8150bea3/node_modules/@nuxt/ui/dist/runtime/components/Button.vue')['default']
-    UTextarea: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.0.1_@babel+parser@7.28.4_@netlify+blobs@9.1.2_@upstash+redis@1.35.3_axios@1._a4654a37f9c626ba0b04364f8150bea3/node_modules/@nuxt/ui/dist/runtime/components/Textarea.vue')['default']
   }
 }
