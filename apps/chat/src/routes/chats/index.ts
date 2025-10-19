@@ -1,6 +1,12 @@
 import { createDeepSeek } from '@ai-sdk/deepseek'
 import { zValidator } from '@hono/zod-validator'
-import { abortedToolDataSchema, progressDataSchema, threadTitleDataSchema } from '@repo/shared/types'
+import {
+  abortedToolDataSchema,
+  isContinuation,
+  progressDataSchema,
+  threadTitleDataSchema,
+  UIPartBrands,
+} from '@repo/shared/types'
 import {
   convertToModelMessages,
   createUIMessageStream,
@@ -20,6 +26,7 @@ import { ChatMCPService } from '../../ai/mcp'
 import type { MyUIMessage } from '../../ai/types'
 import { env } from '../../env'
 import { ChatsPostFlow } from './flow'
+import assert from 'node:assert'
 
 const model = createDeepSeek().languageModel('deepseek-chat')
 
@@ -89,6 +96,8 @@ const chatApp = new Hono().post(
           return message
         },
         async execute({ writer }) {
+          flow.setWriter(writer)
+
           const createMCPService = ChatMCPService.new({
             signal: reqSignal,
             threadId,
@@ -98,6 +107,44 @@ const chatApp = new Hono().post(
           }).andTee((mcpService) => {
             disposableStack.use(mcpService)
             exitHook(() => mcpService.close())
+
+            mcpService.on('toolCallResult', ({ content, isError, _meta }) => {
+              const toolCallId = _meta?.progressToken
+              if (!toolCallId) {
+                return
+              }
+
+              const continuationPart = inputMessage.parts.find(
+                (part) => part.type === 'dynamic-tool' && part.toolCallId === toolCallId && isContinuation(part.output),
+              )
+              if (!continuationPart) {
+                return
+              }
+              assert(continuationPart.type === 'dynamic-tool')
+
+              const text = content.map((c) => ('text' in c ? c.text : '')).join('\n')
+
+              logger.box('Output for continuation tool', text)
+              if (isError) {
+                continuationPart.state === 'output-error'
+                continuationPart.errorText = text
+                writer.write({
+                  type: 'tool-output-error',
+                  toolCallId: continuationPart.toolCallId,
+                  dynamic: true,
+                  errorText: text,
+                })
+              } else {
+                continuationPart.state === 'output-available'
+                continuationPart.output = text
+                writer.write({
+                  type: 'tool-output-available',
+                  toolCallId: continuationPart.toolCallId,
+                  dynamic: true,
+                  output: text,
+                })
+              }
+            })
           })
 
           const getUpdatedMessages = flow.getPersistedMessages().andThen((persistedMessages) =>
@@ -114,7 +161,24 @@ const chatApp = new Hono().post(
                   )
                 }),
               )
-              .andThen(() => flow.updateNewMessage({ persistedMessages, newMessage: inputMessage })),
+              .andThen(() => flow.updateNewMessage({ persistedMessages, newMessage: inputMessage }))
+              // 调用模型需要所有工具调用都有输出，用特殊的 Brand 标记一下
+              .andTee(() => {
+                for (const part of inputMessage.parts) {
+                  if (
+                    part.type === 'dynamic-tool' &&
+                    part.state !== 'output-available' &&
+                    part.state !== 'output-error'
+                  ) {
+                    //@ts-ignore
+                    part.state = 'output-available'
+                    //@ts-ignore
+                    part.output = {
+                      [UIPartBrands.Continuation]: true,
+                    }
+                  }
+                }
+              }),
           )
 
           const mcpTools = await createMCPService.andThen((mcpService) =>

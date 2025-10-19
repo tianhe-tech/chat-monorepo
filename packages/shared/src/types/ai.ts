@@ -16,18 +16,17 @@ export const abortedToolDataSchema = z.object({
 
 export type ThreadTitleDataPart = z.infer<typeof threadTitleDataSchema>
 export type ProgressDataPart = z.infer<typeof progressDataSchema>
-export type AbortedToolDataPart = z.infer<typeof abortedToolDataSchema>
 
 export type DataUIParts = {
   'thread-title': ThreadTitleDataPart
   progress: ProgressDataPart
-  'aborted-tool': AbortedToolDataPart
 }
 //#endregion
 
 export const UIPartBrands = {
   ElicitationRequest: '__elicitation_request',
   ElicitationResponse: '__elicitation_response',
+  Continuation: '__continuation',
 } as const
 
 export function isElicitationRequest(
@@ -38,4 +37,8 @@ export function isElicitationRequest(
 
 export function isElicitationResponse(val: unknown): val is { [UIPartBrands.ElicitationResponse]: ElicitResult } {
   return typeof val === 'object' && val !== null && UIPartBrands.ElicitationResponse in val
+}
+
+export function isContinuation(val: unknown): val is { [UIPartBrands.Continuation]: true } {
+  return typeof val === 'object' && val !== null && UIPartBrands.Continuation in val
 }

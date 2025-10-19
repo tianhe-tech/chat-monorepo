@@ -1,6 +1,6 @@
 import type { LanguageModelV2 } from '@ai-sdk/provider'
 import { constructDBError } from '@repo/shared/utils'
-import { generateText, stepCountIs } from 'ai'
+import { streamText, stepCountIs, generateId, NoOutputGeneratedError, type UIMessageStreamWriter } from 'ai'
 import { consola, type ConsolaInstance } from 'consola'
 import { eq } from 'drizzle-orm'
 import { ok, okAsync, ResultAsync } from 'neverthrow'
@@ -8,6 +8,7 @@ import { ChatMCPService } from '../../ai/mcp'
 import type { MyUIMessage } from '../../ai/types'
 import { db } from '../../db'
 import * as dbSchema from '../../db/schema'
+import assert from 'node:assert'
 
 export type ChatsPostFlowOptions = {
   threadId: string
@@ -17,12 +18,17 @@ export type ChatsPostFlowOptions = {
 export class ChatsPostFlow {
   #threadId: ChatsPostFlowOptions['threadId']
   #user: ChatsPostFlowOptions['user']
+  #writer?: UIMessageStreamWriter<MyUIMessage>
   #logger: ConsolaInstance
 
   constructor({ threadId, user }: ChatsPostFlowOptions) {
     this.#threadId = threadId
     this.#user = user
     this.#logger = consola.withTag(`ChatsPostFlow:${threadId}`)
+  }
+
+  setWriter(writer: UIMessageStreamWriter<MyUIMessage>) {
+    this.#writer = writer
   }
 
   getPersistedMessages(): ResultAsync<MyUIMessage[], unknown> {
@@ -90,7 +96,6 @@ export class ChatsPostFlow {
     ).map(() => [...persistedMessages.slice(0, -1), newMessage])
   }
 
-  // TODO: 可细粒度配置的工具列表
   setupSampling(params: { mcpService: ChatMCPService; model: LanguageModelV2; signal: AbortSignal }) {
     const { mcpService, model, signal } = params
 
@@ -108,7 +113,7 @@ export class ChatsPostFlow {
           )
         })()
 
-        const { text } = await generateText({
+        const { fullStream, text } = streamText({
           model,
           messages: messages.map((message) => ({
             role: message.role,
@@ -117,14 +122,59 @@ export class ChatsPostFlow {
           system: systemPrompt,
           tools: Object.fromEntries(includedTools),
           abortSignal: signal,
-          stopWhen: stepCountIs(5),
+          stopWhen: stepCountIs(7),
         })
+
+        try {
+          for await (const chunk of fullStream) {
+            switch (chunk.type) {
+              case 'tool-call':
+                this.#writer?.write({
+                  type: 'tool-input-available',
+                  toolCallId: chunk.toolCallId,
+                  toolName: chunk.toolName,
+                  input: chunk.input,
+                  dynamic: chunk.dynamic,
+                })
+                break
+              case 'tool-result':
+                this.#writer?.write({
+                  type: 'tool-output-available',
+                  toolCallId: chunk.toolCallId,
+                  output: chunk.output,
+                  dynamic: chunk.dynamic,
+                })
+                break
+              case 'tool-error':
+                this.#writer?.write({
+                  type: 'tool-output-error',
+                  toolCallId: chunk.toolCallId,
+                  dynamic: chunk.dynamic,
+                  errorText: String(chunk.error),
+                })
+                break
+              default:
+                break
+            }
+          }
+        } catch {}
+
+        let assistantText = ''
+        try {
+          assistantText = await text
+        } catch (error) {
+          if (NoOutputGeneratedError.isInstance(error)) {
+            this.#logger.warn('Sampling completed without generated text; responding with an empty assistant message.')
+          } else {
+            throw error
+          }
+        }
 
         await mcpService.sendSamplingResult({
           model: model.modelId,
           content: {
             type: 'text',
-            text,
+            text: assistantText,
           },
           role: 'assistant',
         })

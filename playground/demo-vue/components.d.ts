@@ -8,6 +8,10 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    ChatMessageAssistant: typeof import('./src/components/chat/message/assistant/index.vue')['default']
+    ChatMessageAssistantDefaultMCPToolPart: typeof import('./src/components/chat/message/assistant/DefaultMCPToolPart.vue')['default']
+    ChatMessageAssistantDynamicToolPart: typeof import('./src/components/chat/message/assistant/DynamicToolPart.vue')['default']
+    ChatMessageAssistantElicitationRequestMCPToolPart: typeof import('./src/components/chat/message/assistant/ElicitationRequestMCPToolPart.vue')['default']
     ChatMessageRoot: typeof import('./src/components/chat/message/Root.vue')['default']
     ChatProvider: typeof import('./src/components/chat/Provider.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']

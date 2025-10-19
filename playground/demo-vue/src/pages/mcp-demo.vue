@@ -1,11 +1,26 @@
+<script lang="ts">
+  const progressMessageInjectionKey = Symbol('progress-message') as InjectionKey<{
+    progressMessage: Ref<string | undefined>
+  }>
+
+  export function injectProgressMessageContext() {
+    const context = inject(progressMessageInjectionKey)
+    if (!context) {
+      throw new Error('Progress message context is not provided')
+    }
+    return context
+  }
+</script>
+
 <script setup lang="ts">
-  import { ChatMessageAssistantParts } from '@/components/chat/message/assistant'
+  import ChatMessageAssistantParts from '@/components/chat/message/assistant/index.vue'
   import { ChatMessageUserParts } from '@/components/chat/message/user'
   import type { MyUIMessage } from '@/ai/types'
   import { Chat } from '@ai-sdk/vue'
   import * as theme from '@repo/design/theme'
   import { DefaultChatTransport } from 'ai'
   import { v4 as uuid } from 'uuid'
+  import type { InjectionKey } from 'vue'
 
   const ui = {
     thread: theme.thread(),
@@ -13,6 +28,9 @@
   }
 
   const id = ref(uuid())
+
+  const progressMessage = ref<string>()
+  provide(progressMessageInjectionKey, { progressMessage })
 
   const chat = computed(
     () =>
@@ -28,6 +46,16 @@
             },
           }),
         }),
+        onToolCall({ toolCall }) {
+          if (toolCall.input.__intent) {
+            progressMessage.value = toolCall.input.__intent
+          }
+        },
+        onData({ type, data }) {
+          if (type === 'data-progress' && data.message) {
+            progressMessage.value = data.message
+          }
+        },
       }),
   )
 
@@ -35,6 +63,7 @@
 
   function sendMessage() {
     chat.value.sendMessage({ text: inputValue.value })
+    console.log(chat.value.messages)
     inputValue.value = ''
   }
 </script>
@@ -47,9 +76,16 @@
         <UButton size="sm" @click="id = uuid()"> New Chat </UButton>
       </div>
       <div :class="ui.thread.body({ class: 'p-5' })">
-        <div v-for="message in chat.messages" :key="message.id" :class="ui.message.container({ role: message.role })">
+        <div
+          v-for="(message, index) in chat.messages"
+          :key="message.id ? message.id : index"
+          :class="ui.message.container({ role: message.role })"
+        >
           <ChatMessageRoot :message="message">
-            <ChatMessageAssistantParts :parts="message.parts" v-if="message.role === 'assistant'" />
+            <template v-if="message.role === 'assistant'">
+              <div v-if="progressMessage" class="animate-pulse">{{ progressMessage }}</div>
+              <ChatMessageAssistantParts />
+            </template>
             <ChatMessageUserParts v-else-if="message.role === 'user'" />
           </ChatMessageRoot>
         </div>

@@ -35,8 +35,12 @@ export function resolveElicitationRequest({
       const parse = Result.fromThrowable(() => zodSchema.parse(content))
       return parse().map((content) => ({ action: 'accept', content }))
     },
-    decline: () => ({ action: 'decline' }),
-    cancel: () => ({ action: 'cancel' }),
+    decline: () => {
+      return { action: 'decline' }
+    },
+    cancel: () => {
+      return { action: 'cancel' }
+    },
     message: request.message,
     zodSchema,
     jsonSchema,

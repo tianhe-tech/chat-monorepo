@@ -28,6 +28,7 @@ import ky from 'ky'
 import { err, ok, Result, ResultAsync } from 'neverthrow'
 import assert from 'node:assert'
 import EventEmitter from 'node:events'
+import { z } from 'zod'
 import { z as z3 } from 'zodv3'
 import { env } from '../env'
 import type { MyUIMessage } from './types'
@@ -59,7 +60,7 @@ export class ChatMCPService
     samplingRequest: [SamplingRequest['params'] & { serverName: string; metadata?: SamplingRequestMeta }]
     elicitationRequest: [ElicitRequest['params'] & { serverName: string }]
     progress: [Progress & { progressToken?: string }]
-    toolCallResult: [CallToolResult & { progressToken?: string }]
+    toolCallResult: [CallToolResult & { _meta?: { progressToken?: string } }]
     error: unknown[]
   }>
   implements AsyncDisposable
@@ -345,7 +346,16 @@ export class ChatMCPService
         category: (mcpTool._meta?.category as any) ?? 'tool',
         annotations: mcpTool.annotations,
         ...dynamicTool({
-          inputSchema: jsonSchema(mcpTool.inputSchema as any),
+          inputSchema: jsonSchema({
+            ...mcpTool.inputSchema,
+            properties: {
+              __intent: z.toJSONSchema(z.string().describe('用简短的一句话表达调用该工具的意图')),
+              params: {
+                type: 'object',
+                properties: mcpTool.inputSchema.properties,
+              },
+            },
+          }),
           description: mcpTool.description,
           execute: async (input, { toolCallId }) => {
             const prevToolCallId = this.#currentToolCallId
@@ -354,7 +364,7 @@ export class ChatMCPService
 
             const result = await this.callTool({
               name: mcpTool.name,
-              arguments: input as Record<string, unknown>,
+              arguments: input.params as Record<string, unknown>,
               _meta: {
                 progressToken: toolCallId,
               },
@@ -511,7 +521,7 @@ export class ChatMCPService
     this.on('progress', ({ progress, message, total }) => {
       this.#streamWriter.write({
         type: 'data-progress',
-        id: `progress-${this.#currentToolCallId}`,
+        id: this.#currentToolCallId,
         data: {
           progress,
           message,

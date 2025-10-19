@@ -1,4 +1,4 @@
 import type { UIMessage } from 'ai'
-import type { DataUIParts, Tools } from '@repo/shared/ai'
+import type { DataUIParts } from '@repo/shared/types'
 
-export type MyUIMessage = UIMessage<never, DataUIParts, Tools>
+export type MyUIMessage = UIMessage<never, DataUIParts>
