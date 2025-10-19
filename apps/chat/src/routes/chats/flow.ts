@@ -1,6 +1,6 @@
 import type { LanguageModelV2 } from '@ai-sdk/provider'
 import { constructDBError } from '@repo/shared/utils'
-import { generateText } from 'ai'
+import { generateText, stepCountIs } from 'ai'
 import { consola, type ConsolaInstance } from 'consola'
 import { eq } from 'drizzle-orm'
 import { ok, okAsync, ResultAsync } from 'neverthrow'
@@ -95,15 +95,17 @@ export class ChatsPostFlow {
     const { mcpService, model, signal } = params
 
     return mcpService.getTools().map((mcpTools) => {
-      mcpService.on('samplingRequest', async ({ messages, serverName, systemPrompt, includeContext }) => {
+      mcpService.on('samplingRequest', async ({ messages, serverName, systemPrompt, metadata }) => {
         const includedTools = (() => {
-          if (includeContext === 'none') {
+          const includedTools = metadata?.tools
+          this.#logger.debug('Sampling Tools,', includedTools)
+          if (!includedTools || includedTools.length === 0) {
             return []
           }
-          if (includeContext === 'allServers') {
-            return mcpTools
-          }
-          return mcpTools.filter(([toolName, tool]) => toolName.startsWith(serverName) && !tool.isEntry)
+          return mcpTools.filter(
+            ([toolName]) =>
+              toolName.startsWith(serverName) && includedTools.some((includedTool) => toolName.endsWith(includedTool)),
+          )
         })()
 
         const { text } = await generateText({
@@ -115,6 +117,7 @@ export class ChatsPostFlow {
           system: systemPrompt,
           tools: Object.fromEntries(includedTools),
           abortSignal: signal,
+          stopWhen: stepCountIs(5),
         })
 
         await mcpService.sendSamplingResult({

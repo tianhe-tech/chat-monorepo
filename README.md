@@ -144,5 +144,3 @@ TBD
 ## Acknowledgements
 
 This project builds upon [ai-sdk](https://ai-sdk.dev) and the broader AI development ecosystem.
-
-<!-- TODO: Add specific links and acknowledgements as the project develops -->

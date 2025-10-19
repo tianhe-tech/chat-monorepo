@@ -1,18 +1,12 @@
 {
   "$schema": "https://turbo.build/schema.json",
-  "extends": [
-    "//"
-  ],
+  "extends": ["//"],
   "tasks": {
     "dev": {
       "persistent": true,
       "cache": false,
-      "env": [
-        "VITE_DEEPSEEK_API_KEY"
-      ],
-      "with": [
-        "@th-chat/chat#dev"
-      ]
+      "env": ["VITE_DEEPSEEK_API_KEY", "chrome", "BROWSER"],
+      "with": ["@th-chat/chat#dev"]
     }
   }
 }

@@ -1,0 +1,29 @@
+### 
+
+@hostname = localhost
+@port = 3001
+@threadId = {{$uuid}}
+
+
+### Basic Chat
+
+# @accept chunked
+
+POST /chats HTTP/1.1
+Host: {{hostname}}:{{port}}
+
+{
+  "messages": [
+    {
+      "id": "{{$uuid}}",
+      "parts": [
+        {
+          "text": "你都有什么工具？",
+          "type": "text"
+        }
+      ],
+      "role": "user"
+    }
+  ],
+  "threadId": "{{threadId}}"
+}

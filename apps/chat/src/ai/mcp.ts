@@ -17,6 +17,8 @@ import {
   MCPMessageChannel,
   UIPartBrands,
   type MCPMessageChannelString,
+  type MCPToolDefinitionMeta,
+  type SamplingRequestMeta,
 } from '@repo/shared/types'
 import { PubSub } from '@repo/shared/utils'
 import { dynamicTool, jsonSchema, type DynamicToolUIPart, type UIMessageStreamWriter } from 'ai'
@@ -42,7 +44,10 @@ type ChatMCPServiceFactoryOptions = Omit<ChatMCPServiceConstructorOptions, 'pubs
   valkeyAddresses: { host: string; port: number }[]
 }
 
-type AITool = ReturnType<typeof dynamicTool> & { isEntry?: boolean }
+type AITool = ReturnType<typeof dynamicTool> &
+  MCPToolDefinitionMeta & {
+    annotations?: { title?: string }
+  }
 type ToolName = string
 
 /** Service to communicate with MCP Client/Host within a single request.
@@ -51,7 +56,7 @@ type ToolName = string
  */
 export class ChatMCPService
   extends EventEmitter<{
-    samplingRequest: [SamplingRequest['params'] & { serverName: string }]
+    samplingRequest: [SamplingRequest['params'] & { serverName: string; metadata?: SamplingRequestMeta }]
     elicitationRequest: [ElicitRequest['params'] & { serverName: string }]
     progress: [Progress & { progressToken?: string }]
     toolCallResult: [CallToolResult & { progressToken?: string }]
@@ -65,7 +70,7 @@ export class ChatMCPService
   #fetch = ky.create({
     prefixUrl: env.MCP_SERVICE_URL,
   })
-  #tools?: ResultAsync<[string, ReturnType<typeof dynamicTool> & { isEntry?: boolean }][], unknown>
+  #tools?: ResultAsync<[string, AITool][], unknown>
   #pubsub: PubSub<MCPMessageChannelString>
   #publish: (channel: MCPMessageChannelString, data: object) => Promise<number>
   #currentToolCallId?: string
@@ -153,6 +158,7 @@ export class ChatMCPService
             'mcp-thread-id': this.#threadId,
           },
           signal: this.#signal,
+          timeout: 120_000,
         })
         .json<CallToolResult>(),
       (e) => e,
@@ -301,7 +307,7 @@ export class ChatMCPService
           const timeout = setTimeout(() => {
             reject(new Error('Tool call timed out'))
             this.off('toolCallResult', toolResultHandler)
-          }, 10_000)
+          }, 20_000)
 
           this.once('toolCallResult', toolResultHandler)
         }),
@@ -336,7 +342,8 @@ export class ChatMCPService
     return [
       mcpTool.name,
       {
-        isEntry: mcpTool._meta?.isEntry as boolean,
+        category: (mcpTool._meta?.category as any) ?? 'tool',
+        annotations: mcpTool.annotations,
         ...dynamicTool({
           inputSchema: jsonSchema(mcpTool.inputSchema as any),
           description: mcpTool.description,
@@ -390,9 +397,7 @@ export class ChatMCPService
       success,
       data: parsed,
       error,
-    } = z3
-      .object({ id: z3.string(), data: ProgressSchema.extend({ progressToken: z3.string() }) })
-      .safeParse(JSON.parse(message))
+    } = z3.object({ id: z3.string(), data: ProgressSchema }).safeParse(JSON.parse(message))
     if (!success) {
       const m = 'Invalid progress request received'
       this.#logger.error(m, error.message)
@@ -404,12 +409,19 @@ export class ChatMCPService
   }
 
   #emitSamplingRequest = (message: string) => {
+    this.#logger.debug('Received sampling request message:', message)
     const {
       success,
       data: parsed,
       error,
     } = z3
-      .object({ id: z3.string(), data: SamplingRequestSchema.shape.params.extend({ serverName: z3.string() }) })
+      .object({
+        id: z3.string(),
+        data: SamplingRequestSchema.shape.params.extend({
+          serverName: z3.string(),
+          metadata: z3.optional(z3.object({ tools: z3.optional(z3.array(z3.string())) })),
+        }),
+      })
       .safeParse(JSON.parse(message))
     if (!success) {
       const m = 'Invalid sampling request received'
@@ -422,6 +434,7 @@ export class ChatMCPService
   }
 
   #emitElicitationRequest = (message: string) => {
+    this.#logger.debug('Received elicitation request message:', message)
     const {
       success,
       data: parsed,
@@ -457,7 +470,6 @@ export class ChatMCPService
   }
 
   sendSamplingResult = (result: SamplingResult) => {
-    this.#logger.debug('Sending sampling result to MCP:', result)
     const publish = ResultAsync.fromPromise(this.#publish(MCPMessageChannel.SamplingResult, result), (err) => {
       this.#logger.error('Failed to send sampling result to MCP:', err)
       return err
@@ -496,10 +508,10 @@ export class ChatMCPService
   }
 
   #handleProgress = () => {
-    this.on('progress', ({ progress, message, progressToken, total }) => {
+    this.on('progress', ({ progress, message, total }) => {
       this.#streamWriter.write({
         type: 'data-progress',
-        id: `progress-${progressToken}`,
+        id: `progress-${this.#currentToolCallId}`,
         data: {
           progress,
           message,

@@ -17,3 +17,11 @@ export const mcpServerDefinitionSchema = z.object({
 })
 
 export type MCPServerDefinition = z.infer<typeof mcpServerDefinitionSchema>
+
+export type MCPToolDefinitionMeta = {
+  category: 'tool' | 'workflow' | 'util'
+}
+
+export type SamplingRequestMeta = {
+  tools?: string[]
+}

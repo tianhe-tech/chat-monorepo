@@ -118,22 +118,22 @@ const chatApp = new Hono().post(
           )
 
           const mcpTools = await createMCPService.andThen((mcpService) =>
-            mcpService.getTools().andTee(() => flow.setupSampling({ mcpService, model, signal })),
+            mcpService
+              .getTools()
+              .andTee(() => flow.setupSampling({ mcpService, model, signal }))
+              .map((tools) => tools.filter(([_, tool]) => tool.category !== 'util')),
           )
 
           if (mcpTools.isErr()) {
-            throw mcpTools.error
+            logger.error('Failed to get MCP tools', mcpTools.error)
+            throw new HTTPException(500)
           }
 
           const uiMessages = await getUpdatedMessages
           if (uiMessages.isErr()) {
-            throw uiMessages.error
+            logger.error('Failed to get updated messages', uiMessages.error)
+            throw new HTTPException(500)
           }
-
-          logger.debug(
-            'Starting to stream assistant message...',
-            inspect({ uiMessages: uiMessages.value }, { depth: Infinity }),
-          )
 
           const stream = streamText({
             model,

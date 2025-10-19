@@ -1,0 +1,46 @@
+### 
+
+@hostname = localhost
+@port = 3002
+@threadId = {{$uuid}}
+
+
+### Create Config
+
+# @prompt url
+
+POST /configs HTTP/1.1
+Host: {{hostname}}:{{port}}
+Mcp-Thread-Id: {{threadId}}
+
+{
+  "servers": [
+    {
+      "name": "test",
+      "url": "{{url}}"
+    }
+  ]
+}
+
+
+### Get Configs
+
+GET /configs HTTP/1.1
+Host: {{hostname}}:{{port}}
+Mcp-Thread-Id: {{threadId}}
+
+
+### Get Tools
+
+GET /tools HTTP/1.1
+Host: {{hostname}}:{{port}}
+Mcp-Thread-Id: {{threadId}}
+
+
+### 
+
+POST /tools HTTP/1.1
+Host: {{hostname}}:{{port}}
+Mcp-Thread-Id: {{threadId}}
+
+{}
