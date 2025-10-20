@@ -1,3 +1,5 @@
+```mermaid
+
 %% High-Level Chat <> MCP Interaction Overview
 %% Generated on 2025-09-24
 sequenceDiagram
@@ -12,9 +14,9 @@ sequenceDiagram
     Hub->>Servers: Coordinate capability discovery
     Servers-->>Hub: Provide capability summary
     Hub-->>Chat: Share aggregated capabilities
-
+    
     Chat-->>FE: Stream assistant response
-
+    
     alt Tool invocation
         Chat->>Hub: Ask to execute selected tool
         Hub->>Servers: Delegate execution
@@ -22,7 +24,7 @@ sequenceDiagram
         Hub-->>Chat: Deliver tool result
         Chat-->>FE: Surface tool outcome
     end
-
+    
     opt Server-initiated follow-up
         Servers->>Hub: Trigger follow-up request
         Hub-->>Chat: Forward follow-up intent
@@ -31,5 +33,6 @@ sequenceDiagram
         Chat->>Hub: Respond to follow-up
         Hub->>Servers: Relay conversation update
     end
-
+    
     Chat-->>FE: Conclude response stream
+```

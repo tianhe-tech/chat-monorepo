@@ -3,6 +3,7 @@ import { zValidator } from '@hono/zod-validator'
 import {
   abortedToolDataSchema,
   isContinuation,
+  isElicitationRequest,
   progressDataSchema,
   threadTitleDataSchema,
   UIPartBrands,
@@ -213,8 +214,14 @@ const chatApp = new Hono().post(
         async onFinish({ messages }) {
           await disposableStack.disposeAsync()
 
-          logger.debug('Saving assistant message to db...', inspect({ messages }, { depth: Infinity }))
+          // TODO better one
+          const lastPart = messages.at(-1)?.parts.at(-1)
+          if (lastPart && lastPart.type === 'dynamic-tool' && isElicitationRequest(lastPart.output)) {
+            logger.debug("We don't persist elicitation request")
+            messages.pop()
+          }
 
+          logger.debug('Saving assistant message to db...', inspect({ messages }, { depth: Infinity }))
           const result = await flow.persistMessages({ messages })
           if (result.isErr()) {
             throw result.error
