@@ -1,9 +1,9 @@
-import type { DynamicToolUIPart } from 'ai'
 import type { ElicitResult } from '@modelcontextprotocol/sdk/types.js'
-import { UIPartBrands, isElicitationRequest } from '../types'
+import type { DynamicToolUIPart } from 'ai'
 import { err, ok, Result } from 'neverthrow'
 import { z } from 'zod'
 import { convertJsonSchemaToZod } from 'zod-from-json-schema'
+import { isElicitationRequest } from '../types'
 
 type ResolveElicitationRequestParams = {
   part: DynamicToolUIPart
@@ -26,7 +26,7 @@ export function resolveElicitationRequest({
     return err(new Error('Part is not an elicitation request'))
   }
 
-  const request = part.output[UIPartBrands.ElicitationRequest]
+  const request = part.output
   const jsonSchema = request.requestedSchema
   const zodSchema = request.requestedSchema ? convertJsonSchemaToZod(request.requestedSchema) : z.any()
 

@@ -15,7 +15,8 @@ import {
 import {
   isElicitationResponse,
   MCPMessageChannel,
-  UIPartBrands,
+  toolIntentSchema,
+  UIPartTag,
   type MCPMessageChannelString,
   type MCPToolDefinitionMeta,
   type SamplingRequestMeta,
@@ -225,7 +226,7 @@ export class ChatMCPService
       return part
     }
 
-    const elicitationResponse = output[UIPartBrands.ElicitationResponse]
+    const elicitationResponse = output
     this.#logger.debug('ElicitationResponse', elicitationResponse)
 
     return this.#sendElicitationResult(elicitationResponse).match(
@@ -340,31 +341,31 @@ export class ChatMCPService
   }
 
   #convertMCPToolToAITool(mcpTool: MCPTool): [ToolName, AITool] {
+    const mergedInputSchema: Record<string, unknown> = {
+      type: 'object',
+      properties: {
+        ...z.toJSONSchema(toolIntentSchema).properties,
+        params: mcpTool.inputSchema,
+      },
+    }
+
     return [
       mcpTool.name,
       {
         category: (mcpTool._meta?.category as any) ?? 'tool',
         annotations: mcpTool.annotations,
         ...dynamicTool({
-          inputSchema: jsonSchema({
-            ...mcpTool.inputSchema,
-            properties: {
-              __intent: z.toJSONSchema(z.string().describe('用简短的一句话表达调用该工具的意图')),
-              params: {
-                type: 'object',
-                properties: mcpTool.inputSchema.properties,
-              },
-            },
-          }),
+          inputSchema: jsonSchema(mergedInputSchema),
           description: mcpTool.description,
           execute: async (input, { toolCallId }) => {
             const prevToolCallId = this.#currentToolCallId
             this.#currentToolCallId = toolCallId
             new DisposableStack().defer(() => (this.#currentToolCallId = prevToolCallId))
 
+            const params = (input as any)?.params
             const result = await this.callTool({
               name: mcpTool.name,
-              arguments: input.params as Record<string, unknown>,
+              arguments: params,
               _meta: {
                 progressToken: toolCallId,
               },
@@ -508,7 +509,8 @@ export class ChatMCPService
         type: 'tool-output-available',
         toolCallId: this.#currentToolCallId!,
         output: {
-          [UIPartBrands.ElicitationRequest]: request,
+          [UIPartTag.IsElicitationRequest]: true,
+          ...request,
         },
         dynamic: true,
       })

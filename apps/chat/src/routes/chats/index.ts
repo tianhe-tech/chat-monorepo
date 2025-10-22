@@ -6,7 +6,7 @@ import {
   isElicitationRequest,
   progressDataSchema,
   threadTitleDataSchema,
-  UIPartBrands,
+  UIPartTag,
 } from '@repo/shared/types'
 import {
   convertToModelMessages,
@@ -175,7 +175,7 @@ const chatApp = new Hono().post(
                     part.state = 'output-available'
                     //@ts-ignore
                     part.output = {
-                      [UIPartBrands.Continuation]: true,
+                      [UIPartTag.IsContinuation]: true,
                     }
                   }
                 }

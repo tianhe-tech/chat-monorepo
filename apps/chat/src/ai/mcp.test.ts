@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach, vi } from 'vitest'
-import { MCPMessageChannel, UIPartBrands } from '@repo/shared/types'
+import { MCPMessageChannel, UIPartTag } from '@repo/shared/types'
 import { ChatMCPService } from './mcp'
 
 const { kyCreateMock, dynamicToolMock, jsonSchemaMock } = vi.hoisted(() => {
@@ -181,7 +181,13 @@ describe('ChatMCPService', () => {
 
       const tools = await service.getTools().unwrapOr([])
       expect(getMock).toHaveBeenCalledTimes(1)
-      expect(jsonSchemaMock).toHaveBeenCalledWith({ type: 'object' })
+      const [inputSchemaArg] = jsonSchemaMock.mock.calls.at(-1) ?? []
+      expect(inputSchemaArg).toMatchObject({
+        type: 'object',
+        required: ['params'],
+      })
+      expect(inputSchemaArg?.properties?.params).toEqual({ type: 'object' })
+      expect(inputSchemaArg?.properties?.__intent).toBeDefined()
       expect(dynamicToolMock).toHaveBeenCalledTimes(1)
       expect(tools).toHaveLength(1)
 
@@ -218,7 +224,8 @@ describe('ChatMCPService', () => {
         toolName: 'sample-tool',
         input: { _confirm: 'confirm' },
         output: {
-          [UIPartBrands.ElicitationResponse]: { action: 'confirm' },
+          [UIPartTag.IsElicitationResponse]: true,
+          action: 'confirm',
         },
       } as const
 
@@ -258,7 +265,8 @@ describe('ChatMCPService', () => {
         toolName: 'sample-tool',
         input: { _confirm: 'confirm' },
         output: {
-          [UIPartBrands.ElicitationResponse]: { action: 'confirm' },
+          [UIPartTag.IsElicitationResponse]: true,
+          action: 'confirm',
         },
       } as const
 

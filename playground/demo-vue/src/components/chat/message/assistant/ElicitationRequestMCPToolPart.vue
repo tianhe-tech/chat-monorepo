@@ -1,6 +1,6 @@
 <script setup lang="ts">
   import type { ResolveElicitationRequestReturn } from '@repo/shared/ai'
-  import { UIPartBrands } from '@repo/shared/types'
+  import { UIPartTag } from '@repo/shared/types'
   import { injectChatContext } from '../../Provider.vue'
   import type { DynamicToolUIPart } from 'ai'
 
@@ -15,18 +15,18 @@
     const result = accept({})
     if (result.isErr()) {
       console.error(result.error)
-      part.output = { [UIPartBrands.ElicitationResponse]: { action: 'cancel' } }
+      part.output = { [UIPartTag.IsElicitationResponse]: true, action: 'cancel' }
     } else {
-      part.output = { [UIPartBrands.ElicitationResponse]: result.value }
+      part.output = { [UIPartTag.IsElicitationResponse]: true, ...result.value }
     }
     await chat.value.sendMessage()
   }
   async function onDecline() {
-    part.output = { [UIPartBrands.ElicitationResponse]: decline() }
+    part.output = { [UIPartTag.IsElicitationResponse]: true, ...decline() }
     await chat.value.sendMessage()
   }
   async function onCancel() {
-    part.output = { [UIPartBrands.ElicitationResponse]: cancel() }
+    part.output = { [UIPartTag.IsElicitationResponse]: true, ...cancel() }
     await chat.value.sendMessage()
   }
 </script>

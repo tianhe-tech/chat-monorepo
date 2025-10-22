@@ -21,6 +21,7 @@
   import { DefaultChatTransport } from 'ai'
   import { v4 as uuid } from 'uuid'
   import type { InjectionKey } from 'vue'
+  import { getToolCallIntent } from '@repo/shared/types'
 
   const ui = {
     thread: theme.thread(),
@@ -47,8 +48,9 @@
           }),
         }),
         onToolCall({ toolCall }) {
-          if (toolCall.input.__intent) {
-            progressMessage.value = toolCall.input.__intent
+          const intent = getToolCallIntent(toolCall.input)
+          if (intent) {
+            progressMessage.value = intent
           }
         },
         onData({ type, data }) {
