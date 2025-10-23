@@ -17,7 +17,7 @@ import {
   type CreateMessageRequest as SamplingRequest,
   type CreateMessageResult as SamplingResult,
 } from '@modelcontextprotocol/sdk/types.js'
-import type { MCPServerDefinition } from '@repo/shared/types'
+import type { MCPServerDefinition } from '@internal/shared/types'
 import { consola, type ConsolaInstance } from 'consola'
 import { ResultAsync, ok, okAsync } from 'neverthrow'
 import EventEmitter from 'node:events'

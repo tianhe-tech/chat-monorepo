@@ -4,7 +4,7 @@
   "tasks": {
     "dev": {
       "persistent": true,
-      "with": ["@th-chat/mcp#dev"],
+      "with": ["@th-chat/mcp-hub#dev"],
       "passThroughEnv": ["DEEPSEEK_API_KEY"]
     },
     "test": {}

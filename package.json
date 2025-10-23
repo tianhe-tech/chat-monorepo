@@ -12,7 +12,7 @@
   "packageManager": "pnpm@10.18.2",
   "devDependencies": {
     "@prettier/plugin-oxc": "^0.0.4",
-    "@repo/tsconfig": "workspace:@th-chat/tsconfig@*",
+    "@internal/tsconfig": "workspace:*",
     "@testcontainers/postgresql": "catalog:test",
     "@testcontainers/valkey": "catalog:test",
     "oxlint": "^1.22.0",

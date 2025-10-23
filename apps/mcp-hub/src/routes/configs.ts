@@ -1,6 +1,6 @@
 import { zValidator } from '@hono/zod-validator'
-import { mcpServerDefinitionSchema } from '@repo/shared/types'
-import { ConstraintViolationError, constructDBError } from '@repo/shared/utils'
+import { mcpServerDefinitionSchema } from '@internal/shared/types'
+import { ConstraintViolationError, constructDBError } from '@internal/shared/utils'
 import { consola } from 'consola'
 import { eq, inArray, sql, type InferInsertModel } from 'drizzle-orm'
 import { Hono } from 'hono'

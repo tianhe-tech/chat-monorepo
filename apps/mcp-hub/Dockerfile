@@ -7,7 +7,7 @@ FROM base AS pruned
 WORKDIR /app
 RUN pnpm install -g turbo@^2
 COPY . .
-RUN turbo prune @th-chat/mcp --docker
+RUN turbo prune @th-chat/mcp-hub --docker
 
 FROM base AS builder
 WORKDIR /app

@@ -7,7 +7,7 @@ import {
   progressDataSchema,
   threadTitleDataSchema,
   UIPartTag,
-} from '@repo/shared/types'
+} from '@internal/shared/types'
 import {
   convertToModelMessages,
   createUIMessageStream,

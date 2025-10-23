@@ -1,6 +1,6 @@
 <script setup lang="ts">
-  import type { ResolveElicitationRequestReturn } from '@repo/shared/ai'
-  import { UIPartTag } from '@repo/shared/types'
+  import type { ResolveElicitationRequestReturn } from '@internal/shared/ai'
+  import { UIPartTag } from '@internal/shared/types'
   import { injectChatContext } from '../../Provider.vue'
   import type { DynamicToolUIPart } from 'ai'
 

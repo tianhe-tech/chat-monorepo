@@ -20,8 +20,8 @@ import {
   type MCPMessageChannelString,
   type MCPToolDefinitionMeta,
   type SamplingRequestMeta,
-} from '@repo/shared/types'
-import { PubSub } from '@repo/shared/utils'
+} from '@internal/shared/types'
+import { PubSub } from '@internal/shared/utils'
 import { dynamicTool, jsonSchema, type DynamicToolUIPart, type UIMessageStreamWriter } from 'ai'
 import { consola, type ConsolaInstance } from 'consola'
 import { colorize } from 'consola/utils'

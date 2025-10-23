@@ -1,4 +1,4 @@
-import type { MCPServerDefinition } from '@repo/shared/types'
+import type { MCPServerDefinition } from '@internal/shared/types'
 import { spinUpFixtureMCPServer } from '@repo/test-utils'
 import { consola } from 'consola'
 import { afterAll, beforeAll, describe, expect, test } from 'vitest'

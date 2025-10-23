@@ -1,5 +1,5 @@
 {
-  "extends": "@repo/tsconfig/vue.tsconfig.json",
+  "extends": "@internal/tsconfig/vue.tsconfig.json",
   "include": ["env.d.ts", "src/**/*", "src/**/*.vue", "typed-router.d.ts", "auto-imports.d.ts", "components.d.ts"],
   "exclude": ["src/**/__tests__/*"],
   "compilerOptions": {

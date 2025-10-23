@@ -10,10 +10,10 @@
 
 ## Build, Test, and Development Commands
 - `pnpm install` (run at the monorepo root) ensures dependencies align with the workspace lockfile.
-- `pnpm --filter @th-chat/mcp dev` starts the watch server via `tsx` and reloads on file changes.
-- `pnpm --filter @th-chat/mcp build` compiles to ESM using Tsdown and updates `dist/`.
-- `pnpm --filter @th-chat/mcp type-check` runs `tsc --noEmit` to guard against structural regressions.
-- `pnpm --filter @th-chat/mcp test` executes the Vitest suite once; append `test:dev` for watch mode.
+- `pnpm --filter @th-chat/mcp-hub dev` starts the watch server via `tsx` and reloads on file changes.
+- `pnpm --filter @th-chat/mcp-hub build` compiles to ESM using Tsdown and updates `dist/`.
+- `pnpm --filter @th-chat/mcp-hub type-check` runs `tsc --noEmit` to guard against structural regressions.
+- `pnpm --filter @th-chat/mcp-hub test` executes the Vitest suite once; append `test:dev` for watch mode.
 - Database helpers: `db:generate`, `db:migrate`, `db:push`, and `db:studio` all proxy to Drizzle Kit through `dotenvx`.
 
 ## Coding Style & Naming Conventions

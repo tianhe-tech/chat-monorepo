@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach, vi } from 'vitest'
-import { MCPMessageChannel, UIPartTag } from '@repo/shared/types'
+import { MCPMessageChannel, UIPartTag } from '@internal/shared/types'
 import { ChatMCPService } from './mcp'
 
 const { kyCreateMock, dynamicToolMock, jsonSchemaMock } = vi.hoisted(() => {

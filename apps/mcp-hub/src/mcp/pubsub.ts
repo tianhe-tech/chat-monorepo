@@ -4,8 +4,8 @@ import {
   type ElicitResult,
   type CreateMessageResult as SamplingResult,
 } from '@modelcontextprotocol/sdk/types.js'
-import { MCPMessageChannel, type MCPMessageChannelString } from '@repo/shared/types'
-import { PubSub, type ValkeyAddresses } from '@repo/shared/utils'
+import { MCPMessageChannel, type MCPMessageChannelString } from '@internal/shared/types'
+import { PubSub, type ValkeyAddresses } from '@internal/shared/utils'
 import { consola, type ConsolaInstance } from 'consola'
 import { destr } from 'destr'
 import { ResultAsync } from 'neverthrow'

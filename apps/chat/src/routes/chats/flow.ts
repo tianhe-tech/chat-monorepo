@@ -1,5 +1,5 @@
 import type { LanguageModelV2 } from '@ai-sdk/provider'
-import { constructDBError } from '@repo/shared/utils'
+import { constructDBError } from '@internal/shared/utils'
 import { streamText, stepCountIs, generateId, NoOutputGeneratedError, type UIMessageStreamWriter } from 'ai'
 import { consola, type ConsolaInstance } from 'consola'
 import { eq } from 'drizzle-orm'

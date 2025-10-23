@@ -1,5 +1,5 @@
 {
-  "name": "@th-chat/tsconfig",
+  "name": "@internal/tsconfig",
   "private": "true",
   "version": "1.0.0",
   "description": "",

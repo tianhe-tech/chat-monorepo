@@ -1,5 +1,5 @@
 {
-  "name": "@th-chat/mcp",
+  "name": "@th-chat/mcp-hub",
   "private": true,
   "version": "1.0.0",
   "type": "module",
@@ -44,9 +44,9 @@
     "zodv3": "npm:zod@^3.25.76"
   },
   "devDependencies": {
-    "@repo/shared": "workspace:@th-chat/shared@*",
-    "@repo/test-utils": "workspace:@th-chat/test-utils@*",
-    "@repo/tsconfig": "workspace:@th-chat/tsconfig@*",
+    "@internal/shared": "workspace:*",
+    "@repo/test-utils": "workspace:*",
+    "@internal/tsconfig": "workspace:*",
     "@testcontainers/postgresql": "catalog:test",
     "@testcontainers/valkey": "catalog:test",
     "@types/node": "^24.5.2",

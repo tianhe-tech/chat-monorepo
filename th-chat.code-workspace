@@ -9,7 +9,7 @@
       "path": "apps/chat",
     },
     {
-      "name": "🚀 @th-chat/mcp",
+      "name": "🚀 @th-chat/mcp-hub",
       "path": "apps/mcp",
     },
     {
@@ -25,7 +25,7 @@
       "path": "packages/test-utils",
     },
     {
-      "name": "📦 @th-chat/tsconfig",
+      "name": "📦 @internal/tsconfig",
       "path": "packages/tsconfig",
     },
     {

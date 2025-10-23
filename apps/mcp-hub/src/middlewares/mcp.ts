@@ -1,5 +1,5 @@
-import type { MCPServerDefinition } from '@repo/shared/types'
-import { constructDBError } from '@repo/shared/utils'
+import type { MCPServerDefinition } from '@internal/shared/types'
+import { constructDBError } from '@internal/shared/utils'
 import { consola } from 'consola'
 import { createMiddleware } from 'hono/factory'
 import { HTTPException } from 'hono/http-exception'

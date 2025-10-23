@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { resolveElicitationRequest } from '@repo/shared/ai'
+  import { resolveElicitationRequest } from '@internal/shared/ai'
   import type { DynamicToolUIPart } from 'ai'
   import ElicitationRequestMCPToolPart from './ElicitationRequestMCPToolPart.vue'
   import DefaultMCPToolPart from './DefaultMCPToolPart.vue'

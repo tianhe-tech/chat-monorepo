@@ -1,6 +1,6 @@
 <script setup lang="ts">
   import type { DynamicToolUIPart } from 'ai'
-  import { getToolCallIntent, isElicitationResponse } from '@repo/shared/types'
+  import { getToolCallIntent, isElicitationResponse } from '@internal/shared/types'
 
   const { part } = defineProps<{ part: DynamicToolUIPart }>()
 </script>

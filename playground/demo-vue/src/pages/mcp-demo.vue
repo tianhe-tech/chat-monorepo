@@ -21,7 +21,7 @@
   import { DefaultChatTransport } from 'ai'
   import { v4 as uuid } from 'uuid'
   import type { InjectionKey } from 'vue'
-  import { getToolCallIntent } from '@repo/shared/types'
+  import { getToolCallIntent } from '@internal/shared/types'
 
   const ui = {
     thread: theme.thread(),
