@@ -8,7 +8,7 @@ import assert from 'node:assert'
 import { db } from '../db'
 import { env } from '../env'
 import { mcpClientCache } from '../mcp/cache'
-import { MCPClientManager } from '../mcp/client'
+import { MCPClientManager } from '../mcp/hub'
 import { MCPClientPubSubCoordinator } from '../mcp/pubsub'
 
 const logger = consola.withTag('MCP Middleware')

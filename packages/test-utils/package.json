@@ -1,5 +1,5 @@
 {
-  "name": "@th-chat/test-utils",
+  "name": "@internal/test-utils",
   "version": "1.0.0",
   "description": "",
   "type": "module",

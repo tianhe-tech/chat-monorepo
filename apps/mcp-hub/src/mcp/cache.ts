@@ -1,6 +1,6 @@
 import TTLCache from '@isaacs/ttlcache'
 import { env } from '../env'
-import type { MCPClientManager } from './client'
+import type { MCPClientManager } from './hub'
 
 export const mcpClientCache = new TTLCache<string, MCPClientManager>({
   ttl: env.MCP_CACHE_TTL_MS,

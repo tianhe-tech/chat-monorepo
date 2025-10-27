@@ -39,13 +39,15 @@
     "go-go-try": "^6.2.0",
     "hono": "catalog:",
     "neverthrow": "catalog:",
+    "p-timeout": "^7.0.1",
     "pg": "^8.16.3",
+    "xstate": "^5.23.0",
     "zod": "catalog:",
     "zodv3": "npm:zod@^3.25.76"
   },
   "devDependencies": {
     "@internal/shared": "workspace:*",
-    "@repo/test-utils": "workspace:*",
+    "@internal/test-utils": "workspace:*",
     "@internal/tsconfig": "workspace:*",
     "@testcontainers/postgresql": "catalog:test",
     "@testcontainers/valkey": "catalog:test",

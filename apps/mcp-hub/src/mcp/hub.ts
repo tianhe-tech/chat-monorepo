@@ -22,6 +22,7 @@ import { consola, type ConsolaInstance } from 'consola'
 import { ResultAsync, ok, okAsync } from 'neverthrow'
 import EventEmitter from 'node:events'
 import { env } from '../env'
+import * as Contract from '@internal/shared/contracts/chat-mcp-hub'
 
 type MCPClientManagerOptions = {
   servers: Record<string, MCPServerDefinition>
@@ -118,21 +119,8 @@ export class MCPClientManager extends EventEmitter<{
     return this.fetchTools()
   }
 
-  readonly constructToolName = ({ serverName, toolName }: { serverName: string; toolName: string }) =>
-    `${serverName}_${toolName}`
-
-  readonly destructToolName = (fullToolName: string): { serverName: string; toolName: string } => {
-    const underscoreIndex = fullToolName.indexOf('_')
-    if (underscoreIndex === -1) {
-      throw new Error(`Invalid tool name format: ${fullToolName}`)
-    }
-    const serverName = fullToolName.substring(0, underscoreIndex)
-    const toolName = fullToolName.substring(underscoreIndex + 1)
-    return { serverName, toolName }
-  }
-
   callTool(params: CallToolRequest['params'], options?: { signal?: AbortSignal }) {
-    const { serverName, toolName } = this.destructToolName(params.name)
+    const { serverName, toolName } = qualifiedToolNameSchema.decode(params.name)
     return this.#getConnectedClientForServer(serverName).andThen((client) =>
       client
         .callTool({ ...params, name: toolName }, options)

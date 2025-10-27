@@ -11,7 +11,7 @@ import { destr } from 'destr'
 import { ResultAsync } from 'neverthrow'
 import { EventEmitter } from 'node:events'
 import { z as z3 } from 'zodv3'
-import type { MCPClientManager } from './client'
+import type { MCPClientManager } from './hub'
 import { colorize } from 'consola/utils'
 
 export type MCPClientPubSubCoordinatorFactoryOptions = {

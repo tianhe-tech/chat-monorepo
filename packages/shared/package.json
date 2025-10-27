@@ -1,5 +1,5 @@
 {
-  "name": "@th-chat/shared",
+  "name": "@internal/shared",
   "version": "1.0.0",
   "description": "",
   "private": true,
@@ -9,6 +9,7 @@
   "license": "ISC",
   "devDependencies": {
     "@modelcontextprotocol/sdk": "catalog:",
+    "@types/node": "^24.9.1",
     "@types/pg": "^8.15.5",
     "@valkey/valkey-glide": "^2.1.0",
     "ai": "catalog:",
@@ -18,14 +19,16 @@
     "pg": "^8.16.3",
     "tsdown": "^0.14.1",
     "zod": "catalog:",
-    "zod-from-json-schema": "^0.5.0"
+    "zod-from-json-schema": "^0.5.0",
+    "zodv3": "npm:zod@^3.25.76"
   },
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     "./ai": "./src/ai/index.ts",
     "./utils": "./src/utils/index.ts",
-    "./types": "./src/types/index.ts"
+    "./types": "./src/types/index.ts",
+    "./contracts/*": "./src/contracts/*.ts"
   },
   "peerDependencies": {
     "@valkey/valkey-glide": "^2.1.0",
