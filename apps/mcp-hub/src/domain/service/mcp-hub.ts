@@ -105,11 +105,20 @@ export class MCPHubService implements AsyncDisposable {
     ).map((nestedTools) => nestedTools.flat())
   }
 
-  callTool(toolCallId: ToolCallId, params: CallToolRequest['params'], options?: RequestOptions) {
+  callTool(toolCallId: ToolCallId, params: CallToolRequest['params'], options?: Omit<RequestOptions, 'onprogress'>) {
     return this.#toolCallAggregate.startToolCall(toolCallId, params.name).asyncAndThen(() => {
       const { serverName, toolName } = Contract.qualifiedToolNameSchema.decode(params.name)
       return this.#getConnectedClientForServer(serverName)
-        .andThen((client) => client.callTool({ ...params, name: toolName, toolCallId }, options))
+        .andThen((client) =>
+          client.callTool(
+            { ...params, name: toolName, toolCallId },
+            {
+              ...options,
+              onprogress: (progress) =>
+                this.#mediator.emit('progress', { id: this.id, data: { ...progress, toolCallId } }),
+            },
+          ),
+        )
         .andTee((result) =>
           this.#mediator.emit('toolCallResult', {
             id: this.id,
@@ -129,7 +138,7 @@ export class MCPHubService implements AsyncDisposable {
       }
       const state = this.#toolCallAggregate.samplingResult(data.toolCallId)
       if (state.isErr()) {
-        this.#logger.error('Failed to update tool call state for sampling result')
+        this.#logger.error('Received sampling result, but we are in a bad state.')
         return
       }
       this.#samplingResolvers.get(data.toolCallId)?.(data)
@@ -148,7 +157,7 @@ export class MCPHubService implements AsyncDisposable {
 
       const state = this.#toolCallAggregate.samplingRequest(currentToolCallId)
       if (state.isErr()) {
-        this.#logger.error('Failed to update tool call state for sampling request')
+        this.#logger.error('Received sampling request, but we are in a bad state.')
         throw state.error
       }
 
@@ -181,7 +190,7 @@ export class MCPHubService implements AsyncDisposable {
       }
       const state = this.#toolCallAggregate.elicitationResult(data.toolCallId)
       if (state.isErr()) {
-        this.#logger.error('Failed to update tool call state for elicitation result')
+        this.#logger.error('Received elicitation result, but we are in a bad state.')
         return
       }
       this.#elicitationResolvers.get(data.toolCallId)?.(data)
@@ -200,7 +209,7 @@ export class MCPHubService implements AsyncDisposable {
 
       const state = this.#toolCallAggregate.elicitationRequest(currentToolCallId)
       if (state.isErr()) {
-        this.#logger.error('Failed to update tool call state for elicitation request')
+        this.#logger.error('Received elicitation request, but we are in a bad state.')
         throw state.error
       }
 

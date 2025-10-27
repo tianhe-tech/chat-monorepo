@@ -1,22 +1,23 @@
 import type { ToolCallRequest } from '@internal/shared/contracts/chat-mcp-hub'
-import type { RequestOptions } from '@modelcontextprotocol/sdk/shared/protocol.js'
-import type { Tool, CallToolResult } from '@modelcontextprotocol/sdk/types.js'
-import { errAsync, ok, okAsync, ResultAsync } from 'neverthrow'
-import type { ElicitationHandler, MCPClient, MCPClientCtor, SamplingHandler } from '../port/mcp-client'
-import type { MCPServerConfig } from '../value-object/mcp-server-config'
-import assert from 'node:assert'
 import { Client } from '@modelcontextprotocol/sdk/client'
-import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js'
-import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js'
+import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
+import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js'
+import type { RequestOptions } from '@modelcontextprotocol/sdk/shared/protocol.js'
+import type { CallToolResult, Tool } from '@modelcontextprotocol/sdk/types.js'
+import { CreateMessageRequestSchema, ElicitRequestSchema } from '@modelcontextprotocol/sdk/types.js'
 import { consola, type ConsolaInstance } from 'consola'
+import { ok, ResultAsync } from 'neverthrow'
+import type { ElicitationHandler, MCPClient, SamplingHandler } from '../port/mcp-client'
+import type { MCPServerConfig } from '../value-object/mcp-server-config'
 
 export class MCPClientImpl implements MCPClient {
   #serverConfig: MCPServerConfig
   #client: Client
   #transport?: StreamableHTTPClientTransport | StdioClientTransport | SSEClientTransport
-  #isConnected?: ResultAsync<boolean, Error>
+  #connectResult?: ResultAsync<void, Error>
   #logger: ConsolaInstance
+  #currentToolCallId?: string
 
   constructor(config: MCPServerConfig) {
     this.#serverConfig = config
@@ -33,10 +34,8 @@ export class MCPClientImpl implements MCPClient {
   }
 
   connect(): ResultAsync<void, Error> {
-    if (this.#isConnected !== undefined) {
-      return this.#isConnected
-        .andThen((isConnected) => (isConnected ? ok() : this.connect()))
-        .orElse(() => this.connect())
+    if (this.#connectResult !== undefined) {
+      return this.#connectResult.orElse(() => this.connect())
     }
 
     const config = this.#serverConfig.value
@@ -57,70 +56,90 @@ export class MCPClientImpl implements MCPClient {
       return ok(this.#transport)
     }
 
-    this.#isConnected = createTransport()
+    this.#connectResult = createTransport()
       .asyncAndThen((transport) => {
         const originalOnClose = this.#client.onclose
         this.#client.onclose = () => {
-          this.#logger.debug('Connection closed')
-          this.#isConnected = okAsync(false)
+          this.#logger.info('Connection closed')
+          this.#connectResult = undefined
           originalOnClose?.()
         }
 
         return ResultAsync.fromPromise(
           this.#client.connect(transport, { timeout: 5000 }),
-          (e) => new Error('MCP connection error'),
+          () => new Error('MCP connection error'),
         )
       })
-      .map(() => {
+      .andTee(() => {
         this.#logger.ready(`Connected to MCP Server ${this.#serverConfig.value}`)
-        return true
       })
-      .orTee((err) => {
+      .orTee(() => {
         this.#logger.error(`Failed to connect to MCP server ${this.#serverConfig.value.name}`)
       })
 
-    return this.#isConnected.map(() => {})
+    return this.#connectResult
   }
 
   listTools(): ResultAsync<Tool[], Error> {
-    throw new Error('Method not implemented.')
+    return ResultAsync.fromPromise(
+      this.#client.listTools(),
+      (e) => new Error(`Failed to list tools: ${e instanceof Error ? e.message : String(e)}`),
+    ).map((result) => result.tools)
   }
+
   callTool(params: ToolCallRequest['data'], options?: RequestOptions): ResultAsync<CallToolResult, Error> {
-    throw new Error('Method not implemented.')
+    return this.connect().andThen(() => {
+      const prevToolCallId = this.#currentToolCallId
+      this.#currentToolCallId = params.toolCallId
+      // Extract only the parameters needed for the tool call, not the toolCallId
+      const { toolCallId: _, ...toolParams } = params
+
+      return ResultAsync.fromPromise(
+        this.#client.callTool(toolParams, undefined, options).finally(() => {
+          this.#currentToolCallId = prevToolCallId
+        }) as Promise<CallToolResult>,
+        (e) => new Error(`Failed to call tool: ${e instanceof Error ? e.message : String(e)}`),
+      )
+    })
   }
+
   setSamplingHandler(handler: SamplingHandler): ResultAsync<void, Error> {
-    throw new Error('Method not implemented.')
+    return this.connect().map(() => {
+      this.#client.setRequestHandler(CreateMessageRequestSchema, ({ params }) => handler(params))
+    })
   }
+
   setElicitationHandler(handler: ElicitationHandler): ResultAsync<void, Error> {
-    throw new Error('Method not implemented.')
+    return this.connect().map(() => {
+      this.#client.setRequestHandler(ElicitRequestSchema, ({ params }) => handler(params))
+    })
   }
+
   getCurrenToolCallId(): string | undefined {
-    throw new Error('Method not implemented.')
+    return this.#currentToolCallId
   }
 
   async [Symbol.asyncDispose](): Promise<void> {
     if (!this.#transport) {
       this.#logger.info('Dispose called but transport was not connected')
-      await okAsync(true)
       return
     }
     this.#logger.debug('Disposing client and closing transport')
 
-    this.#isConnected = ResultAsync.fromPromise(
+    this.#connectResult = ResultAsync.fromPromise(
       this.#transport.close().finally(() => {
         this.#transport = undefined
       }),
       (e) => new Error('Transport close error'),
     )
-      .map(() => {
-        this.#logger.debug('Transport closed successfully')
-        return false
+      .andTee(() => {
+        this.#logger.info('Transport closed successfully')
       })
-      .mapErr((err) => {
+      .orTee((err) => {
         this.#logger.error('Error during transport close:', err)
-        return err
       })
 
-    return this.#isConnected
+    // Wait for the close operation but return void
+    await this.#connectResult
   }
 }
