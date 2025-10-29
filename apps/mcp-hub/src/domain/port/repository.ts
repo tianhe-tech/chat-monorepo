@@ -1,11 +1,17 @@
-import type { Result } from 'neverthrow'
-import type { MCPServerConfig } from '../value-object/mcp-server-config'
+import type { ResultAsync } from 'neverthrow'
+import type { MCPServerConfig } from '@internal/shared/contracts/mcp-server-config'
 
-export interface MCPServerConfigRepo {
-  checkExists(config: MCPServerConfig): Result<boolean, Error>
-  create(config: MCPServerConfig): Result<number, Error>
-  update(id: number, updateValue: Partial<MCPServerConfig>): Result<void, Error>
-  getMany(): Result<MCPServerConfig[], Error>
-  getById(id: number): Result<MCPServerConfig | undefined, Error>
-  delete(id: number): Result<void, Error>
+export abstract class MCPServerConfigRepo {
+  readonly userId: string
+  readonly scope: string
+  constructor(props: { userId: string; scope: string }) {
+    this.userId = props.userId
+    this.scope = props.scope
+  }
+  abstract checkExists(config: MCPServerConfig): ResultAsync<boolean, Error>
+  abstract create(config: MCPServerConfig): ResultAsync<number, Error>
+  abstract update(id: number, updateValue: MCPServerConfig): ResultAsync<void, Error>
+  abstract getMany(): ResultAsync<(MCPServerConfig & { id: number })[], Error>
+  abstract getById(id: number): ResultAsync<MCPServerConfig | undefined, Error>
+  abstract delete(id: number): ResultAsync<void, Error>
 }

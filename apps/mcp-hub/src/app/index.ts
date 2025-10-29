@@ -1,7 +1,7 @@
 import { serve } from '@hono/node-server'
 import { consola } from 'consola'
 import { gracefulExit } from 'exit-hook'
-import { env } from './env'
+import { env } from './app/env'
 import app from './routes'
 
 consola.wrapConsole()

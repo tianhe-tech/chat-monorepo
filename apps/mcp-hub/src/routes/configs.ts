@@ -7,9 +7,9 @@ import { Hono } from 'hono'
 import { HTTPException } from 'hono/http-exception'
 import { err, ok, ResultAsync } from 'neverthrow'
 import { z } from 'zod'
-import { db } from '../db'
-import { mcpServerConfig } from '../db/schema'
-import { mcpClientCache } from '../mcp/cache'
+import { db } from '../infra/db'
+import { mcpServerConfig } from '../infra/db/schema'
+import { mcpClientCache } from '../infra/mcp-hub-cache'
 
 const logger = consola.withTag('Configs App')
 

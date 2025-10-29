@@ -1,13 +1,19 @@
 import * as Contract from '@internal/shared/contracts/chat-mcp-hub'
 import type { RequestOptions } from '@modelcontextprotocol/sdk/shared/protocol.js'
-import type { CallToolRequest, CreateMessageResult, ElicitResult } from '@modelcontextprotocol/sdk/types.js'
+import type {
+  CallToolRequest,
+  CallToolResult,
+  CreateMessageResult,
+  ElicitResult,
+  Tool,
+} from '@modelcontextprotocol/sdk/types.js'
 import type { ConsolaInstance } from 'consola'
-import { errAsync, okAsync, ResultAsync } from 'neverthrow'
+import { err, ok, Result, ResultAsync } from 'neverthrow'
 import pTimeout from 'p-timeout'
 import { MCPToolCallAggregate } from '../entity/mcp-tool-call-aggregate'
 import type { DomainMediator } from '../mediator'
-import type { MCPClient, MCPClientCtor } from '../port/mcp-client'
-import type { MCPServerConfig } from '../value-object/mcp-server-config'
+import type { MCPClient } from '../port/mcp-client'
+import type { MCPServerConfig } from '@internal/shared/contracts/mcp-server-config'
 
 export class InvalidInputError extends Error {}
 
@@ -18,27 +24,28 @@ type MCPHubServiceCtorParams = {
   id: string
   servers: MCPServerConfig[]
   logger: ConsolaInstance
-  MCPClientImpl: MCPClientCtor
   mediator: DomainMediator
+  mcpClientFactory: (config: MCPServerConfig) => MCPClient
 }
 
 export class MCPHubService implements AsyncDisposable {
   readonly id: string
   #serverConfigs: Map<MCPServerName, MCPServerConfig>
   #logger: ConsolaInstance
-  #MCPClientImpl: MCPClientCtor
   #toolCallAggregate: MCPToolCallAggregate
   #mediator: DomainMediator
+  #mcpClientFactory: MCPHubServiceCtorParams['mcpClientFactory']
 
   #mcpClients = new Map<MCPServerName, MCPClient>()
   #samplingResolvers = new Map<ToolCallId, (result: CreateMessageResult) => void>()
   #elicitationResolvers = new Map<ToolCallId, (result: ElicitResult) => void>()
+  #disposableStack = new AsyncDisposableStack()
 
-  constructor({ id, servers, logger, MCPClientImpl, mediator }: MCPHubServiceCtorParams) {
+  constructor({ id, servers, logger, mcpClientFactory, mediator }: MCPHubServiceCtorParams) {
     this.id = id
-    this.#serverConfigs = new Map(servers.map((server) => [server.value.name, server]))
+    this.#serverConfigs = new Map(servers.map((server) => [server.name, server]))
     this.#logger = logger
-    this.#MCPClientImpl = MCPClientImpl
+    this.#mcpClientFactory = mcpClientFactory
     this.#toolCallAggregate = new MCPToolCallAggregate(id)
     this.#mediator = mediator
     this.#handleElicitationResult()
@@ -47,50 +54,47 @@ export class MCPHubService implements AsyncDisposable {
 
   async [Symbol.asyncDispose](): Promise<void> {
     await Promise.allSettled(Array.from(this.#mcpClients.values().map((client) => client[Symbol.asyncDispose]())))
+    await this.#disposableStack.disposeAsync()
   }
 
-  #getConnectedClientForServer(serverName: string) {
+  useDisposable(disposable: AsyncDisposable) {
+    return this.#disposableStack.use(disposable)
+  }
+
+  #getClientOfServer(serverName: string): Result<MCPClient, Error> {
     const serverConfig = this.#serverConfigs.get(serverName)
     if (!serverConfig) {
-      return errAsync(new InvalidInputError(`Server config not found: ${serverName}`))
+      return err(new InvalidInputError(`Server config not found: ${serverName}`))
     }
 
-    const getOrCreateClient = () => {
-      const existingClient = this.#mcpClients.get(serverName)
-      if (existingClient) {
-        this.#logger.debug(`Reusing existing MCP client for server: ${serverName}`)
-        return okAsync(existingClient)
-      }
-      this.#logger.debug(`Creating new MCP client for server: ${serverName}`)
-      const newClient = new this.#MCPClientImpl(serverConfig)
-      this.#mcpClients.set(serverName, newClient)
-      this.#setupSamplingForClient(newClient)
-      this.#setupElicitationForClient(newClient)
-      return okAsync(newClient)
+    const existingClient = this.#mcpClients.get(serverName)
+    if (existingClient) {
+      this.#logger.debug(`Reusing existing MCP client for server: ${serverName}`)
+      return ok(existingClient)
     }
-
-    return getOrCreateClient()
-      .andThen((client) => client.connect().map(() => client))
-      .orTee(() => {
-        this.#mcpClients.delete(serverName)
-      })
+    this.#logger.debug(`Creating new MCP client for server: ${serverName}`)
+    const newClient = this.#mcpClientFactory(serverConfig)
+    this.#mcpClients.set(serverName, newClient)
+    this.#setupSamplingForClient(newClient)
+    this.#setupElicitationForClient(newClient)
+    return ok(newClient)
   }
 
-  listToolsOfServer(serverName: string) {
-    return this.#getConnectedClientForServer(serverName).andThen((client) => client.listTools())
+  listToolsOfServer(serverName: string): ResultAsync<Tool[], Error> {
+    return this.#getClientOfServer(serverName).asyncAndThen((client) => client.listTools())
   }
 
-  listToolsByServer() {
+  listToolsByServer(): ResultAsync<Record<string, Tool[]>, Error> {
     return ResultAsync.combine(
       Array.from(
         this.#serverConfigs
           .keys()
-          .map((serverName) => this.listToolsOfServer(serverName).map((tools) => [serverName, tools])),
+          .map((serverName) => this.listToolsOfServer(serverName).map((tools) => [serverName, tools] as const)),
       ),
-    ).map(Object.fromEntries)
+    ).map((entries) => Object.fromEntries(entries))
   }
 
-  listAllTools() {
+  listAllTools(): ResultAsync<Tool[], Error> {
     return ResultAsync.combine(
       Array.from(
         this.#serverConfigs.keys().map((serverName) =>
@@ -105,11 +109,15 @@ export class MCPHubService implements AsyncDisposable {
     ).map((nestedTools) => nestedTools.flat())
   }
 
-  callTool(toolCallId: ToolCallId, params: CallToolRequest['params'], options?: Omit<RequestOptions, 'onprogress'>) {
+  callTool(
+    toolCallId: ToolCallId,
+    params: CallToolRequest['params'],
+    options?: Omit<RequestOptions, 'onprogress'>,
+  ): ResultAsync<CallToolResult, Error> {
     return this.#toolCallAggregate.startToolCall(toolCallId, params.name).asyncAndThen(() => {
       const { serverName, toolName } = Contract.qualifiedToolNameSchema.decode(params.name)
-      return this.#getConnectedClientForServer(serverName)
-        .andThen((client) =>
+      return this.#getClientOfServer(serverName)
+        .asyncAndThen((client) =>
           client.callTool(
             { ...params, name: toolName, toolCallId },
             {

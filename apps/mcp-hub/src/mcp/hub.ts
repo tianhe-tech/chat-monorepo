@@ -21,7 +21,7 @@ import type { MCPServerDefinition } from '@internal/shared/types'
 import { consola, type ConsolaInstance } from 'consola'
 import { ResultAsync, ok, okAsync } from 'neverthrow'
 import EventEmitter from 'node:events'
-import { env } from '../env'
+import { env } from '../app/env'
 import * as Contract from '@internal/shared/contracts/chat-mcp-hub'
 
 type MCPClientManagerOptions = {

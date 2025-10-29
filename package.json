@@ -9,10 +9,10 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "packageManager": "pnpm@10.18.2",
+  "packageManager": "pnpm@10.20.0",
   "devDependencies": {
-    "@prettier/plugin-oxc": "^0.0.4",
     "@internal/tsconfig": "workspace:*",
+    "@prettier/plugin-oxc": "^0.0.4",
     "@testcontainers/postgresql": "catalog:test",
     "@testcontainers/valkey": "catalog:test",
     "oxlint": "^1.22.0",

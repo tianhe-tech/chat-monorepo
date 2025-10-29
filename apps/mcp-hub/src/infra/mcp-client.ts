@@ -6,23 +6,27 @@ import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/
 import type { RequestOptions } from '@modelcontextprotocol/sdk/shared/protocol.js'
 import type { CallToolResult, Tool } from '@modelcontextprotocol/sdk/types.js'
 import { CreateMessageRequestSchema, ElicitRequestSchema } from '@modelcontextprotocol/sdk/types.js'
-import { consola, type ConsolaInstance } from 'consola'
+import type { ConsolaInstance } from 'consola'
 import { ok, ResultAsync } from 'neverthrow'
-import type { ElicitationHandler, MCPClient, SamplingHandler } from '../port/mcp-client'
-import type { MCPServerConfig } from '../value-object/mcp-server-config'
+import { MCPClient, type ElicitationHandler, type SamplingHandler } from '../domain/port/mcp-client'
+import type { MCPServerConfig } from '@internal/shared/contracts/mcp-server-config'
 
-export class MCPClientImpl implements MCPClient {
-  #serverConfig: MCPServerConfig
+type CtorParams = {
+  config: MCPServerConfig
+  logger: ConsolaInstance
+}
+
+export class MCPClientImpl extends MCPClient {
   #client: Client
   #transport?: StreamableHTTPClientTransport | StdioClientTransport | SSEClientTransport
   #connectResult?: ResultAsync<void, Error>
   #logger: ConsolaInstance
   #currentToolCallId?: string
 
-  constructor(config: MCPServerConfig) {
-    this.#serverConfig = config
+  constructor({ config, logger }: CtorParams) {
+    super(config)
     this.#client = new Client(
-      { name: config.value.name, version: '0.1.0' },
+      { name: config.name, version: '0.1.0' },
       {
         capabilities: {
           elicitation: {},
@@ -30,7 +34,7 @@ export class MCPClientImpl implements MCPClient {
         },
       },
     )
-    this.#logger = consola.withTag(`MCPClient:${config.value.name}`)
+    this.#logger = logger
   }
 
   connect(): ResultAsync<void, Error> {
@@ -38,7 +42,7 @@ export class MCPClientImpl implements MCPClient {
       return this.#connectResult.orElse(() => this.connect())
     }
 
-    const config = this.#serverConfig.value
+    const config = this.serverConfig
     const createTransport = () => {
       this.#transport = (() => {
         switch (config.transport) {
@@ -71,20 +75,22 @@ export class MCPClientImpl implements MCPClient {
         )
       })
       .andTee(() => {
-        this.#logger.ready(`Connected to MCP Server ${this.#serverConfig.value}`)
+        this.#logger.ready(`Connected to MCP Server ${this.serverConfig}`)
       })
       .orTee(() => {
-        this.#logger.error(`Failed to connect to MCP server ${this.#serverConfig.value.name}`)
+        this.#logger.error(`Failed to connect to MCP server ${this.serverConfig.name}`)
       })
 
     return this.#connectResult
   }
 
   listTools(): ResultAsync<Tool[], Error> {
-    return ResultAsync.fromPromise(
-      this.#client.listTools(),
-      (e) => new Error(`Failed to list tools: ${e instanceof Error ? e.message : String(e)}`),
-    ).map((result) => result.tools)
+    return this.connect().andThen(() =>
+      ResultAsync.fromPromise(
+        this.#client.listTools(),
+        (e) => new Error(`Failed to list tools: ${e instanceof Error ? e.message : String(e)}`),
+      ).map((result) => result.tools),
+    )
   }
 
   callTool(params: ToolCallRequest['data'], options?: RequestOptions): ResultAsync<CallToolResult, Error> {
@@ -130,7 +136,7 @@ export class MCPClientImpl implements MCPClient {
       this.#transport.close().finally(() => {
         this.#transport = undefined
       }),
-      (e) => new Error('Transport close error'),
+      () => new Error('Transport close error'),
     )
       .andTee(() => {
         this.#logger.info('Transport closed successfully')
