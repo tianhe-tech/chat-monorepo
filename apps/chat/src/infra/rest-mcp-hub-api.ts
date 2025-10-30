@@ -1,8 +1,9 @@
 import ky, { type KyInstance } from 'ky'
 import type { MCPHubAPI } from '../domain/port/mcp-hub-api'
-import type { Tool, CallToolRequest, CallToolResult } from '@modelcontextprotocol/sdk/types.js'
+import type { Tool, CallToolResult } from '@modelcontextprotocol/sdk/types.js'
 import { ResultAsync } from 'neverthrow'
 import type { ConsolaInstance } from 'consola'
+import * as Contract from '@internal/shared/contracts/chat-mcp-hub'
 
 export class RestMCPHubAPI implements MCPHubAPI {
   #ky: KyInstance
@@ -32,7 +33,7 @@ export class RestMCPHubAPI implements MCPHubAPI {
   }
 
   callTool(
-    params: CallToolRequest['params'],
+    params: Contract.ToolCallRequest['data'],
     options: { signal?: AbortSignal } = {},
   ): ResultAsync<CallToolResult, Error> {
     this.#logger.debug(`Calling MCP tool ${params.name} with params:`, params)

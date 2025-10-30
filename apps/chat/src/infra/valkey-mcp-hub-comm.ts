@@ -32,7 +32,7 @@ export class ValkeyMCPHubComm implements AsyncDisposable {
       PubSub.new<MCPMessageChannelString>({
         channels: [
           MCPMessageChannel.ElicitationRequest,
-          MCPMessageChannel.ElicitationRequest,
+          MCPMessageChannel.SamplingRequest,
           MCPMessageChannel.Progress,
           MCPMessageChannel.ToolCallResult,
         ],

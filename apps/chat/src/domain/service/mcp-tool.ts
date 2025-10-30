@@ -1,8 +1,15 @@
 import type { MCPHubAPI } from '../port/mcp-hub-api'
 import type { Tool as MCPTool } from '@modelcontextprotocol/sdk/types.js'
-import { dynamicTool, jsonSchema, type Tool as AITool } from 'ai'
+import { dynamicTool, jsonSchema } from 'ai'
 import z from 'zod'
 import { MCPToolPartTag } from '../entity/part'
+import type { MCPToolDefinitionMeta } from '@internal/shared/types'
+import type { ResultAsync } from 'neverthrow'
+
+type AITool = ReturnType<typeof dynamicTool> &
+  MCPToolDefinitionMeta & {
+    annotations?: { title?: string }
+  }
 
 type CtorParams = {
   hubAPI: MCPHubAPI
@@ -32,6 +39,8 @@ export class MCPToolService {
     return [
       mcpTool.name,
       {
+        category: (mcpTool._meta?.category as MCPToolDefinitionMeta['category']) ?? 'tool',
+        annotations: mcpTool.annotations,
         ...dynamicTool({
           inputSchema: jsonSchema(inputSchemaWithIntent),
           description: mcpTool.description,
@@ -46,6 +55,7 @@ export class MCPToolService {
             const params = (input as any)?.params
             const result = await this.#hubAPI.callTool(
               {
+                toolCallId,
                 name: mcpTool.name,
                 arguments: params,
                 _meta: {
@@ -66,7 +76,7 @@ export class MCPToolService {
     ]
   }
 
-  listAllTools() {
+  listAllTools(): ResultAsync<[string, AITool][], Error> {
     return this.#hubAPI
       .listAllTools({ signal: this.#signal })
       .map((tools) => tools.map((tool) => this.#convertMCPToolToAITool(tool)))
