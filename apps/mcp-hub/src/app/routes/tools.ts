@@ -29,7 +29,7 @@ export default new Hono()
     }
     throw new HTTPException(500, { cause: result.error })
   })
-  .post('/', mcpThreadIdMiddleware, async (c) => {
+  .post('/', mcpThreadIdMiddleware, zValidator('json', z.unknown()), async (c) => {
     const user = c.get('user')
     const { 'mcp-thread-id': threadId } = c.req.valid('header')
     const body = await c.req.json()

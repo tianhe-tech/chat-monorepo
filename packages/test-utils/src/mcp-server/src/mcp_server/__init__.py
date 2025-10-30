@@ -52,7 +52,7 @@ async def elicitation(
     """Run an elicitation flow to collect a minimal preference payload."""
 
     intro = f'Help select between two lightweight options for testing purposes. Topic: {topic}.'
-    result = await ctx.elicit(intro, response_type=None)
+    result = await ctx.elicit(intro, response_type=PreferenceSurvey)
 
     if result.action != 'accept':
         return {'status': result.action}
@@ -60,6 +60,8 @@ async def elicitation(
     preference = result.data
     return {
         'status': 'accept',
+        'choice': preference.preferred_option,
+        'rationale': preference.rationale,
     }
 
 

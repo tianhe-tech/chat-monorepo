@@ -54,6 +54,7 @@
     "@types/node": "^24.5.2",
     "@types/pg": "^8.15.5",
     "drizzle-kit": "^0.31.4",
+    "msw": "^2.11.6",
     "tsdown": "^0.15.2",
     "tsx": "^4.20.5",
     "typescript": "^5.9.2",
