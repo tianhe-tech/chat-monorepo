@@ -363,7 +363,7 @@ export class ChatMCPService
             new DisposableStack().defer(() => (this.#currentToolCallId = prevToolCallId))
 
             const params = (input as any)?.params
-            const result = await this.callTool({
+            const result = await this.calTool({
               name: mcpTool.name,
               arguments: params,
               _meta: {

@@ -8,10 +8,10 @@
     "dist/**/*.js"
   ],
   "scripts": {
-    "dev": "dotenvx run -- tsx --watch src/index.ts",
+    "dev": "dotenvx run -- tsx --watch src/app/index.ts",
     "build": "tsdown",
     "type-check": "tsc --noEmit",
-    "start": "dotenvx run --ignore=MISSING_ENV_FILE -- node dist/index.js",
+    "start": "dotenvx run --ignore=MISSING_ENV_FILE -- node dist/app/index.js",
     "test": "dotenvx run -- vitest run",
     "test:dev": "dotenvx run -- vitest",
     "db:generate": "dotenvx run -- drizzle-kit generate",

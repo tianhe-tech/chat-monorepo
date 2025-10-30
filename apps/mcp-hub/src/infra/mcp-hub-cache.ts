@@ -6,8 +6,10 @@ export function createMCPHubTTLCache(ttlMs: number) {
     ttl: ttlMs,
     updateAgeOnGet: true,
     dispose: async (service, key) => {
-      console.debug(`Invalidating mcp hub service cache (${key})`)
-      await service[Symbol.asyncDispose]()
+      if (service) {
+        console.debug(`Invalidating mcp hub service cache (${key})`)
+        await service[Symbol.asyncDispose]()
+      }
     },
   })
 }

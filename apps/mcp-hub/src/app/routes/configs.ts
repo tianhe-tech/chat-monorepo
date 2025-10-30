@@ -1,4 +1,4 @@
-import { zValidator } from '@hono/zod-validator/'
+import { zValidator } from '@hono/zod-validator'
 import * as Contract from '@internal/shared/contracts/mcp-server-config'
 import { Hono } from 'hono'
 import { HTTPException } from 'hono/http-exception'

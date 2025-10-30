@@ -39,7 +39,7 @@ export class MCPHubService implements AsyncDisposable {
   #mcpClients = new Map<MCPServerName, MCPClient>()
   #samplingResolvers = new Map<ToolCallId, (result: CreateMessageResult) => void>()
   #elicitationResolvers = new Map<ToolCallId, (result: ElicitResult) => void>()
-  #disposableStack = new AsyncDisposableStack()
+  readonly disposableStack = new AsyncDisposableStack()
 
   constructor({ id, servers, logger, mcpClientFactory, mediator }: MCPHubServiceCtorParams) {
     this.id = id
@@ -53,12 +53,15 @@ export class MCPHubService implements AsyncDisposable {
   }
 
   async [Symbol.asyncDispose](): Promise<void> {
-    await Promise.allSettled(Array.from(this.#mcpClients.values().map((client) => client[Symbol.asyncDispose]())))
-    await this.#disposableStack.disposeAsync()
-  }
-
-  useDisposable(disposable: AsyncDisposable) {
-    return this.#disposableStack.use(disposable)
+    await Promise.allSettled(
+      Array.from(
+        this.#mcpClients.entries().map(([key, client]) => {
+          client[Symbol.asyncDispose]()
+          this.#mcpClients.delete(key)
+        }),
+      ),
+    )
+    await this.disposableStack.disposeAsync()
   }
 
   #getClientOfServer(serverName: string): Result<MCPClient, Error> {
@@ -128,12 +131,14 @@ export class MCPHubService implements AsyncDisposable {
           ),
         )
         .andTee((result) =>
-          this.#mediator.emit('toolCallResult', {
-            id: this.id,
-            data: {
-              ...result,
-              toolCallId,
-            },
+          this.#toolCallAggregate.result(toolCallId).map(() => {
+            this.#mediator.emit('toolCallResult', {
+              id: this.id,
+              data: {
+                ...result,
+                toolCallId,
+              },
+            })
           }),
         )
     })

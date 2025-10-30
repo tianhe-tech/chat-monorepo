@@ -1,13 +1,13 @@
+import * as Contract from '@internal/shared/contracts/chat-mcp-hub'
 import consola from 'consola'
-import { DrizzleMCPServerConfigRepo } from '../../infra/mcp-server-config-repo'
-import { getMCPHubCache, MCPHubCacheKeyRegistry } from '../service/mcp-hub-cache'
-import { err, errAsync, ok, okAsync } from 'neverthrow'
-import { ValkeyChatComm } from '../../infra/valkey-chat-comm'
-import { domainMediator } from '../utils'
-import { env } from '../env'
+import { err, ok, okAsync } from 'neverthrow'
+import { DomainMediator } from '../../domain/mediator'
 import { MCPHubService } from '../../domain/service/mcp-hub'
 import { MCPClientImpl } from '../../infra/mcp-client'
-import * as Contract from '@internal/shared/contracts/chat-mcp-hub'
+import { DrizzleMCPServerConfigRepo } from '../../infra/mcp-server-config-repo'
+import { ValkeyChatComm } from '../../infra/valkey-chat-comm'
+import { env } from '../env'
+import { getMCPHubCache, MCPHubCacheKeyRegistry } from '../service/mcp-hub-cache'
 
 export class NotFoundError extends Error {}
 
@@ -18,6 +18,7 @@ export const createMCPHubUseCase = (props: { userId: string; scope: string; thre
   const repo = new DrizzleMCPServerConfigRepo({ userId, scope })
   const cacheKeyRegistry = new MCPHubCacheKeyRegistry({ userId, scope })
   const mcphubCache = getMCPHubCache()
+  const domainMediator = new DomainMediator()
 
   const getHub = () => {
     const existingHub = mcphubCache.get(threadId)
@@ -30,7 +31,7 @@ export const createMCPHubUseCase = (props: { userId: string; scope: string; thre
       .getMany()
       .andThrough((configs) => {
         if (configs.length === 0) {
-          return err(new NotFoundError(`No MCP Server config found for user(${userId}) with scope(${scope})`))
+          return err(new NotFoundError(`No MCP Server config found`))
         }
         return ok()
       })
@@ -52,7 +53,8 @@ export const createMCPHubUseCase = (props: { userId: string; scope: string; thre
               }),
           })
 
-          mcphub.useDisposable(chatComm)
+          mcphub.disposableStack.use(chatComm)
+          mcphub.disposableStack.defer(() => void domainMediator.removeAllListeners())
           mcphubCache.set(threadId, mcphub)
           cacheKeyRegistry.register(threadId)
           return mcphub

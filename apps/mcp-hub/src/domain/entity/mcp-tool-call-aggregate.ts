@@ -11,7 +11,7 @@ export class MCPToolCallAggregate {
 
   startToolCall(toolCallId: string, toolName: string): Result<void, MCPToolCallStateError> {
     if (this.#toolCalls.has(toolCallId)) {
-      return err(new MCPToolCallStateError())
+      return err(new MCPToolCallStateError('Tool is already running'))
     }
     this.#toolCalls.set(toolCallId, new MCPToolCall(toolCallId, toolName))
     return ok()
@@ -20,7 +20,7 @@ export class MCPToolCallAggregate {
   getExistingToolCall(toolCallId: string): Result<MCPToolCall, MCPToolCallStateError> {
     const toolCall = this.#toolCalls.get(toolCallId)
     if (toolCall === undefined) {
-      return err(new MCPToolCallStateError())
+      return err(new MCPToolCallStateError("Tool hasn't started"))
     }
     return ok(toolCall)
   }
@@ -42,6 +42,9 @@ export class MCPToolCallAggregate {
   }
 
   result(toolCallId: string) {
-    return this.getExistingToolCall(toolCallId).andThrough((toolCall) => toolCall.result())
+    return this.getExistingToolCall(toolCallId)
+      .andThrough((toolCall) => toolCall.result())
+      .andTee(() => this.#toolCalls.delete(toolCallId))
+      .orTee(() => this.#toolCalls.delete(toolCallId))
   }
 }

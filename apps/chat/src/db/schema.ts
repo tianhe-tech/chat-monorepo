@@ -1,7 +1,7 @@
 import * as p from 'drizzle-orm/pg-core'
 import { timestamps } from './helpers/columns'
 import { relations } from 'drizzle-orm'
-import type { MyUIMessage } from '../ai/types'
+import type { UIMessageType } from '../domain/entity/message'
 
 export const chat = p.pgSchema('chat')
 
@@ -27,7 +27,7 @@ export const message = chat.table('messages', {
     .references(() => thread.id, { onDelete: 'cascade' }),
   role: roleEnum().notNull(),
   format: messageFormatEnum().notNull(),
-  content: p.json().$type<MyUIMessage['parts']>().notNull(),
+  content: p.json().$type<UIMessageType['parts']>().notNull(),
   ...timestamps,
 })
 

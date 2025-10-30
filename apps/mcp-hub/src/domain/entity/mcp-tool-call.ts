@@ -16,7 +16,7 @@ export class MCPToolCall {
 
   result(): Result<void, MCPToolCallStateError> {
     if (this.#state !== 'running') {
-      return err(new MCPToolCallStateError())
+      return err(new MCPToolCallStateError(this.#state))
     }
     this.#state = 'result'
     return ok()
@@ -24,7 +24,7 @@ export class MCPToolCall {
 
   elicitationRequest(): Result<void, MCPToolCallStateError> {
     if (this.#state !== 'running') {
-      return err(new MCPToolCallStateError())
+      return err(new MCPToolCallStateError(this.#state))
     }
     this.#state = 'pendingElicitation'
     return ok()
@@ -32,7 +32,7 @@ export class MCPToolCall {
 
   elicitationResult(): Result<void, MCPToolCallStateError> {
     if (this.#state !== 'pendingElicitation') {
-      return err(new MCPToolCallStateError())
+      return err(new MCPToolCallStateError(this.#state))
     }
     this.#state = 'running'
     return ok()
@@ -40,7 +40,7 @@ export class MCPToolCall {
 
   samplingRequest(): Result<void, MCPToolCallStateError> {
     if (this.#state !== 'running') {
-      return err(new MCPToolCallStateError())
+      return err(new MCPToolCallStateError(this.#state))
     }
     this.#state = 'pendingSampling'
     return ok()
@@ -48,7 +48,7 @@ export class MCPToolCall {
 
   samplingResult(): Result<void, MCPToolCallStateError> {
     if (this.#state !== 'pendingSampling') {
-      return err(new MCPToolCallStateError())
+      return err(new MCPToolCallStateError(this.#state))
     }
     this.#state = 'running'
     return ok()

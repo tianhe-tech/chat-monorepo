@@ -46,12 +46,42 @@ export class ValkeyChatComm implements AsyncDisposable {
       () => new Error('Failed to create PubSub for ValkeyChatComm'),
     )
 
-    return createPubSub.map((pubsub) => new ValkeyChatComm({ pubsub }))
+    return createPubSub.map((pubsub) => {
+      forwardElicitationRequest(mediator, pubsub)
+      forwardSamplingRequest(mediator, pubsub)
+      forwardToolCallResult(mediator, pubsub)
+      forwardProgress(mediator, pubsub)
+      return new ValkeyChatComm({ pubsub })
+    })
   }
 
   async [Symbol.asyncDispose](): Promise<void> {
     this.#pubsub.close()
   }
+}
+
+function forwardElicitationRequest(mediator: DomainMediator, pubsub: PubSub<MCPMessageChannelString>) {
+  mediator.on('elicitationRequest', (request) =>
+    pubsub.publish({ channel: MCPMessageChannel.ElicitationRequest, message: JSON.stringify(request) }),
+  )
+}
+
+function forwardSamplingRequest(mediator: DomainMediator, pubsub: PubSub<MCPMessageChannelString>) {
+  mediator.on('samplingRequest', (request) =>
+    pubsub.publish({ channel: MCPMessageChannel.SamplingRequest, message: JSON.stringify(request) }),
+  )
+}
+
+function forwardToolCallResult(mediator: DomainMediator, pubsub: PubSub<MCPMessageChannelString>) {
+  mediator.on('toolCallResult', (result) =>
+    pubsub.publish({ channel: MCPMessageChannel.ToolCallResult, message: JSON.stringify(result) }),
+  )
+}
+
+function forwardProgress(mediator: DomainMediator, pubsub: PubSub<MCPMessageChannelString>) {
+  mediator.on('progress', (progress) =>
+    pubsub.publish({ channel: MCPMessageChannel.Progress, message: JSON.stringify(progress) }),
+  )
 }
 
 function recvElicitationResult(mediator: DomainMediator, message: string) {
