@@ -50,6 +50,8 @@
   "devDependencies": {
     "@ai-sdk/deepseek": "^1.0.23",
     "@ai-sdk/provider": "catalog:",
+    "@ai-sdk/provider-utils": "^3.0.14",
+    "@internal/test-utils": "workspace:*",
     "@internal/tsconfig": "workspace:*",
     "@testcontainers/postgresql": "catalog:test",
     "@testcontainers/valkey": "catalog:test",
