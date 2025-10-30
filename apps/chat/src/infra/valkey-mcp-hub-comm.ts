@@ -19,7 +19,7 @@ type FactoryParams = {
 export class ValkeyMCPHubComm implements AsyncDisposable {
   #pubsub: CtorParams['pubsub']
 
-  constructor({ pubsub }: CtorParams) {
+  private constructor({ pubsub }: CtorParams) {
     this.#pubsub = pubsub
   }
 

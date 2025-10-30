@@ -1,7 +1,7 @@
 import * as p from 'drizzle-orm/pg-core'
 import { timestamps } from './helpers/columns'
 import { relations } from 'drizzle-orm'
-import type { UIMessageType } from '../domain/entity/message'
+import type { UIMessageType } from '../../domain/entity/message'
 
 export const chat = p.pgSchema('chat')
 

@@ -77,7 +77,7 @@ export class MCPToolPart
     return data
   }
 
-  getElicitationResult(): ElicitResult | undefined {
+  getElicitationResult(): Contract.ElicitationResult | undefined {
     if (this.#uiPart.state !== 'output-available') {
       return undefined
     }
@@ -85,7 +85,7 @@ export class MCPToolPart
     if (typeof output !== 'object' || output === null || !(MCPToolPartTag.elicitationResult in output)) {
       return undefined
     }
-    const { success, data } = ElicitResultSchema.safeParse(output[MCPToolPartTag.elicitationResult])
+    const { success, data } = Contract.elicitationResultSchema.safeParse(output[MCPToolPartTag.elicitationResult])
     if (!success) {
       return undefined
     }

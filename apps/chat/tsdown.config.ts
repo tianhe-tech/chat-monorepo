@@ -3,9 +3,9 @@ import { defineConfig } from 'tsdown'
 export default defineConfig({
   platform: 'node',
   entry: {
-    index: 'src/index.ts',
-    routes: 'src/routes/index.ts',
-    'db/schema': 'src/db/schema.ts',
+    index: 'src/app/index.ts',
+    routes: 'src/app/routes/index.ts',
+    'db/schema': 'src/infra/db/schema.ts',
   },
   exports: {
     devExports: true,

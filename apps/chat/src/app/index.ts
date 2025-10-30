@@ -2,7 +2,7 @@ import { serve } from '@hono/node-server'
 import { consola } from 'consola'
 import { gracefulExit } from 'exit-hook'
 import { env } from './env'
-import app from './routes'
+import app from './route'
 
 consola.wrapConsole()
 consola.options.formatOptions.colors = true

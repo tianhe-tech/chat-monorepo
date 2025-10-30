@@ -26,6 +26,10 @@ export class MCPToolService {
     this.#signal = signal
   }
 
+  get currentToolCallId() {
+    return this.#currentToolCallId
+  }
+
   #convertMCPToolToAITool(mcpTool: MCPTool): [string, AITool] {
     const inputSchemaWithIntent: Record<string, unknown> = {
       type: 'object',

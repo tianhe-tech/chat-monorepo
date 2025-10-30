@@ -4,19 +4,24 @@ import type { DomainMediator } from '../mediator'
 import { type DataParts, MCPToolPart } from './part'
 import { ResultAsync } from 'neverthrow'
 import assert from 'node:assert'
+import pTimeout from 'p-timeout'
 
 export type UIMessageType = UIMessage<never, DataParts, never>
 
 export class Message implements AsyncDisposable {
   #uiMessage: UIMessageType
   #mcpToolParts: MCPToolPart[]
+  #mediator: DomainMediator
+  #threadId: string
 
   readonly disposableStack = new AsyncDisposableStack()
 
-  constructor(props: { message: UIMessageType; mediator: DomainMediator }) {
-    const { message, mediator } = props
+  constructor(props: { message: UIMessageType; mediator: DomainMediator; threadId: string }) {
+    const { message, mediator, threadId } = props
 
+    this.#mediator = mediator
     this.#uiMessage = message
+    this.#threadId = threadId
     this.#mcpToolParts = message.parts
       .filter((part) => part.type === 'dynamic-tool')
       .map((part) => {
@@ -71,12 +76,40 @@ export class Message implements AsyncDisposable {
     }
   }
 
-  followupElicitationResult() {
+  async followupElicitationResult() {
     const targetParts = this.#mcpToolParts.filter((part) => part.getElicitationResult())
+    if (targetParts.length === 0) {
+      return
+    }
 
     // 目前不会有工具并行调用且多个工具同时被确认的情况
     assert.equal(targetParts.length, 1)
 
     const part = targetParts[0]
+    this.#mediator.emit('mcpToolElicitationResult', part.getElicitationResult()!)
+
+    return pTimeout(
+      new Promise<void>((resolve) => {
+        this.#mediator.on('mcpToolCallResult', (result) => {
+          const { id, data } = result
+          if (id !== this.#threadId || data.toolCallId !== part.uiPart.toolCallId) {
+            return
+          }
+          const text = data.content.map((c) => (c.type === 'text' ? c.text : '')).join('\n')
+          if (data.isError) {
+            part.setError(text)
+          } else {
+            part.setOutput(text)
+          }
+          resolve()
+        })
+      }),
+      {
+        milliseconds: 60_000,
+        fallback: () => {
+          part.setError('Timeout')
+        },
+      },
+    )
   }
 }

@@ -32,10 +32,10 @@ export class ValkeyChatComm implements AsyncDisposable {
         subCallback: ({ channel, message }) => {
           switch (channel) {
             case MCPMessageChannel.SamplingResult:
-              recvElicitationResult(mediator, message)
+              recvSamplingResult(mediator, message)
               break
             case MCPMessageChannel.ElicitationResult:
-              recvSamplingResult(mediator, message)
+              recvElicitationResult(mediator, message)
               break
             default:
               logger.warn(`Unknown channel: ${channel}`)

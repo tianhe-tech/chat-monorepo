@@ -11,7 +11,7 @@ import assert from 'node:assert/strict'
 import z from 'zod'
 import z3 from 'zodv3'
 
-const QUALIFIED_TOOL_NAME_REGEX = /([\w-]+)\/([\w-]+)/
+const QUALIFIED_TOOL_NAME_REGEX = /([\w-]+?)\_([\w-]+)/
 
 export const qualifiedToolNameSchema = z.codec(
   z.string().regex(QUALIFIED_TOOL_NAME_REGEX),
@@ -20,7 +20,7 @@ export const qualifiedToolNameSchema = z.codec(
     toolName: z.string().nonempty(),
   }),
   {
-    encode: (value) => `${value.serverName}/${value.toolName}`,
+    encode: (value) => `${value.serverName}_${value.toolName}`,
     decode: (qualifiedToolName) => {
       const matches = QUALIFIED_TOOL_NAME_REGEX.exec(qualifiedToolName)
       assert.equal(matches?.length, 3)

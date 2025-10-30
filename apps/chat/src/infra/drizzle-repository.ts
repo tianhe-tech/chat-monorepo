@@ -1,8 +1,8 @@
 import { constructDBError } from '@internal/shared/utils'
-import { and, eq, isNull } from 'drizzle-orm'
+import { and, eq, isNull, sql } from 'drizzle-orm'
 import { ResultAsync } from 'neverthrow'
-import { db } from '../db'
-import * as schema from '../db/schema'
+import { db } from './db'
+import * as schema from './db/schema'
 import type { UIMessageType } from '../domain/entity/message'
 import { ThreadRepo } from '../domain/port/repository'
 
@@ -34,7 +34,7 @@ export class DrizzleThreadRepo extends ThreadRepo {
           orderBy: (thread, { desc }) => [desc(thread.updatedAt)],
         })
         .then((threads) => threads.map((thread) => ({ id: thread.id, name: thread.id }))),
-      (error) => this.#handleDBError(error),
+      (e) => new Error('Failed to get threads', { cause: e }),
     )
   }
 
@@ -50,7 +50,7 @@ export class DrizzleThreadRepo extends ThreadRepo {
 
         return thread.messages.map(this.#mapMessageRowToUI)
       })(),
-      (error) => this.#handleDBError(error),
+      (e) => new Error(`Failed to get messages for thread "${threadId}"`, { cause: e }),
     )
   }
 
@@ -80,10 +80,11 @@ export class DrizzleThreadRepo extends ThreadRepo {
               format: payload.format,
               content: payload.content,
               deletedAt: null,
+              updatedAt: sql`now()`,
             },
           })
       })(),
-      (error) => this.#handleDBError(error),
+      (e) => new Error(`Failed to upsert message "${message.id}" in thread "${threadId}"`, { cause: e }),
     )
   }
 
@@ -95,7 +96,7 @@ export class DrizzleThreadRepo extends ThreadRepo {
       db.transaction(async (tx) => {
         const [updatedThread] = await tx
           .update(schema.thread)
-          .set({ deletedAt: now })
+          .set({ deletedAt: now, updatedAt: now })
           .where(
             and(
               eq(schema.thread.id, threadId),
@@ -110,9 +111,12 @@ export class DrizzleThreadRepo extends ThreadRepo {
           return
         }
 
-        await tx.update(schema.message).set({ deletedAt: now }).where(eq(schema.message.threadId, threadId))
+        await tx
+          .update(schema.message)
+          .set({ deletedAt: now, updatedAt: now })
+          .where(eq(schema.message.threadId, threadId))
       }),
-      (error) => this.#handleDBError(error),
+      (e) => new Error(`Failed to delete thread "${threadId}"`, { cause: e }),
     )
   }
 
@@ -169,13 +173,5 @@ export class DrizzleThreadRepo extends ThreadRepo {
       role: message.role,
       parts: message.content,
     }
-  }
-
-  #handleDBError(error: unknown): Error {
-    if (error instanceof ThreadOwnershipError) {
-      return error
-    }
-
-    return constructDBError(error).error
   }
 }
