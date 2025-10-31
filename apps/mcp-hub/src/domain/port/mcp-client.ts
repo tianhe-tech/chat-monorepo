@@ -1,4 +1,4 @@
-import * as Contract from '@internal/shared/contracts/chat-mcp-hub'
+import * as Contract from '@th-chat/shared/contracts/chat-mcp-hub'
 import type { RequestOptions } from '@modelcontextprotocol/sdk/shared/protocol.js'
 import type {
   CallToolResult,
@@ -9,7 +9,7 @@ import type {
   Tool,
 } from '@modelcontextprotocol/sdk/types.js'
 import type { ResultAsync } from 'neverthrow'
-import type { MCPServerConfig } from '@internal/shared/contracts/mcp-server-config'
+import type { MCPServerConfig } from '@th-chat/shared/contracts/mcp-server-config'
 
 export type SamplingHandler = (
   params: CreateMessageRequest['params'],

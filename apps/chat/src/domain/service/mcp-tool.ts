@@ -3,7 +3,7 @@ import type { Tool as MCPTool } from '@modelcontextprotocol/sdk/types.js'
 import { dynamicTool, jsonSchema } from 'ai'
 import z from 'zod'
 import { MCPToolPartTag } from '../entity/part'
-import type { MCPToolDefinitionMeta } from '@internal/shared/types'
+import type { MCPToolDefinitionMeta } from '@th-chat/shared/types'
 import type { ResultAsync } from 'neverthrow'
 
 type AITool = ReturnType<typeof dynamicTool> &

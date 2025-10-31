@@ -3,7 +3,7 @@ import { Result, ResultAsync, err, errAsync, ok, okAsync } from 'neverthrow'
 import { db as defaultDb } from './db'
 import { mcpServerConfig } from './db/schema'
 import { MCPServerConfigRepo } from '../domain/port/repository'
-import { mcpServerConfigSchema, type MCPServerConfig } from '@internal/shared/contracts/mcp-server-config'
+import { mcpServerConfigSchema, type MCPServerConfig } from '@th-chat/shared/contracts/mcp-server-config'
 type Database = typeof defaultDb
 type MCPServerConfigRow = typeof mcpServerConfig.$inferSelect
 

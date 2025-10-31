@@ -11,7 +11,7 @@
   "license": "ISC",
   "packageManager": "pnpm@10.20.0",
   "devDependencies": {
-    "@internal/tsconfig": "workspace:*",
+    "@th-chat/tsconfig": "workspace:*",
     "@prettier/plugin-oxc": "^0.0.4",
     "@testcontainers/postgresql": "catalog:test",
     "@testcontainers/valkey": "catalog:test",

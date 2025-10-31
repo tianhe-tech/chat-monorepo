@@ -1,4 +1,4 @@
-import type { MCPServerConfig } from '@internal/shared/contracts/mcp-server-config'
+import type { MCPServerConfig } from '@th-chat/shared/contracts/mcp-server-config'
 import { errAsync } from 'neverthrow'
 import { DrizzleMCPServerConfigRepo } from '../../infra/mcp-server-config-repo'
 

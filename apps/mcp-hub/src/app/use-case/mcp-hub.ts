@@ -1,4 +1,4 @@
-import * as Contract from '@internal/shared/contracts/chat-mcp-hub'
+import * as Contract from '@th-chat/shared/contracts/chat-mcp-hub'
 import consola from 'consola'
 import { err, ok, okAsync } from 'neverthrow'
 import { DomainMediator } from '../../domain/mediator'

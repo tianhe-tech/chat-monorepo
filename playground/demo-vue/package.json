@@ -23,7 +23,7 @@
     "@dotenvx/dotenvx": "catalog:",
     "@nuxt/ui": "^4.0.1",
     "@th-chat/design": "workspace:*",
-    "@internal/shared": "workspace:*",
+    "@th-chat/shared": "workspace:*",
     "@th-chat/vue": "workspace:*",
     "@vueuse/core": "^13.8.0",
     "ai": "catalog:",

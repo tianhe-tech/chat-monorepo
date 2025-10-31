@@ -1,10 +1,10 @@
-import { MCPMessageChannel, type MCPMessageChannelString } from '@internal/shared/types'
-import { PubSub, type ValkeyAddresses } from '@internal/shared/utils'
+import { MCPMessageChannel, type MCPMessageChannelString } from '@th-chat/shared/types'
+import { PubSub, type ValkeyAddresses } from '@th-chat/shared/utils'
 import type { DomainMediator } from '../domain/mediator'
 import type { ConsolaInstance } from 'consola'
 import { ResultAsync } from 'neverthrow'
 import destr from 'destr'
-import * as Contract from '@internal/shared/contracts/chat-mcp-hub'
+import * as Contract from '@th-chat/shared/contracts/chat-mcp-hub'
 
 type CtorParams = {
   pubsub: PubSub<MCPMessageChannelString>

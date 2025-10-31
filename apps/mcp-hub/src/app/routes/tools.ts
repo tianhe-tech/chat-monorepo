@@ -3,7 +3,7 @@ import { Hono } from 'hono'
 import { HTTPException } from 'hono/http-exception'
 import z from 'zod'
 import { createMCPHubUseCase, NotFoundError } from '../use-case/mcp-hub.ts'
-import * as Contract from '@internal/shared/contracts/chat-mcp-hub'
+import * as Contract from '@th-chat/shared/contracts/chat-mcp-hub'
 
 const mcpThreadIdMiddleware = zValidator(
   'header',

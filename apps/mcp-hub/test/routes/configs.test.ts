@@ -1,4 +1,4 @@
-import type { MCPServerConfig } from '@internal/shared/contracts/mcp-server-config'
+import type { MCPServerConfig } from '@th-chat/shared/contracts/mcp-server-config'
 import { PostgreSqlContainer, type StartedPostgreSqlContainer } from '@testcontainers/postgresql'
 import { consola } from 'consola'
 import { migrate } from 'drizzle-orm/node-postgres/migrator'

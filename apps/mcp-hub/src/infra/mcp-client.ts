@@ -1,4 +1,4 @@
-import type { ToolCallRequest } from '@internal/shared/contracts/chat-mcp-hub'
+import type { ToolCallRequest } from '@th-chat/shared/contracts/chat-mcp-hub'
 import { Client } from '@modelcontextprotocol/sdk/client'
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js'
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
@@ -9,7 +9,7 @@ import { CreateMessageRequestSchema, ElicitRequestSchema } from '@modelcontextpr
 import type { ConsolaInstance } from 'consola'
 import { ok, ResultAsync } from 'neverthrow'
 import { MCPClient, type ElicitationHandler, type SamplingHandler } from '../domain/port/mcp-client'
-import type { MCPServerConfig } from '@internal/shared/contracts/mcp-server-config'
+import type { MCPServerConfig } from '@th-chat/shared/contracts/mcp-server-config'
 
 type CtorParams = {
   config: MCPServerConfig

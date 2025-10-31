@@ -46,9 +46,9 @@
     "zodv3": "npm:zod@^3.25.76"
   },
   "devDependencies": {
-    "@internal/shared": "workspace:*",
-    "@internal/test-utils": "workspace:*",
-    "@internal/tsconfig": "workspace:*",
+    "@th-chat/shared": "workspace:*",
+    "@th-chat/test-utils": "workspace:*",
+    "@th-chat/tsconfig": "workspace:*",
     "@testcontainers/postgresql": "catalog:test",
     "@testcontainers/valkey": "catalog:test",
     "@types/node": "^24.5.2",

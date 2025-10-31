@@ -30,7 +30,7 @@ declare module 'vue-router/auto-routes' {
    * - routes: union of route names of the possible routes when in this page (passed to useRoute<...>())
    * - views: names of nested views (can be passed to <RouterView name="...">)
    *
-   * @internal
+   * @th-chat
    */
   export interface _RouteFileInfoMap {
     'src/pages/frontend-chat.vue': {
@@ -47,7 +47,7 @@ declare module 'vue-router/auto-routes' {
    * Get a union of possible route names in a certain route component file.
    * Used by the volar plugin to automatically type useRoute()
    *
-   * @internal
+   * @th-chat
    */
   export type _RouteNamesForFilePath<FilePath extends string> =
     _RouteFileInfoMap extends Record<FilePath, infer Info>

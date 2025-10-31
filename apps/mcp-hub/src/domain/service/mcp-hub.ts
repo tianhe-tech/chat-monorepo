@@ -1,4 +1,4 @@
-import * as Contract from '@internal/shared/contracts/chat-mcp-hub'
+import * as Contract from '@th-chat/shared/contracts/chat-mcp-hub'
 import type { RequestOptions } from '@modelcontextprotocol/sdk/shared/protocol.js'
 import type {
   CallToolRequest,
@@ -13,7 +13,7 @@ import pTimeout from 'p-timeout'
 import { MCPToolCallAggregate } from '../entity/mcp-tool-call-aggregate'
 import type { DomainMediator } from '../mediator'
 import type { MCPClient } from '../port/mcp-client'
-import type { MCPServerConfig } from '@internal/shared/contracts/mcp-server-config'
+import type { MCPServerConfig } from '@th-chat/shared/contracts/mcp-server-config'
 
 export class InvalidInputError extends Error {}
 

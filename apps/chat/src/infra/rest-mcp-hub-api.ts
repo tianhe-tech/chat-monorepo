@@ -3,7 +3,7 @@ import type { MCPHubAPI } from '../domain/port/mcp-hub-api'
 import type { Tool, CallToolResult } from '@modelcontextprotocol/sdk/types.js'
 import { ResultAsync } from 'neverthrow'
 import type { ConsolaInstance } from 'consola'
-import * as Contract from '@internal/shared/contracts/chat-mcp-hub'
+import * as Contract from '@th-chat/shared/contracts/chat-mcp-hub'
 
 export class RestMCPHubAPI implements MCPHubAPI {
   #ky: KyInstance

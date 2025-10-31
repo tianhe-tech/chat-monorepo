@@ -1,4 +1,4 @@
-import { constructDBError } from '@internal/shared/utils'
+import { constructDBError } from '@th-chat/shared/utils'
 import { and, eq, isNull, sql } from 'drizzle-orm'
 import { ResultAsync } from 'neverthrow'
 import { db } from './db'

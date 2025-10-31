@@ -1,5 +1,5 @@
 import type { LanguageModelV2 } from '@ai-sdk/provider'
-import { qualifiedToolNameSchema, type SamplingRequest } from '@internal/shared/contracts/chat-mcp-hub'
+import { qualifiedToolNameSchema, type SamplingRequest } from '@th-chat/shared/contracts/chat-mcp-hub'
 import { convertToModelMessages, NoOutputGeneratedError, stepCountIs, streamText, type UIMessageStreamWriter } from 'ai'
 import consola from 'consola'
 import { ok, ResultAsync } from 'neverthrow'

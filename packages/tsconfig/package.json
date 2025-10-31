@@ -1,6 +1,6 @@
 {
-  "name": "@internal/tsconfig",
-  "private": "true",
+  "name": "@th-chat/tsconfig",
+  "private": true,
   "version": "1.0.0",
   "description": "",
   "type": "module",

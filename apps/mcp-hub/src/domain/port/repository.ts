@@ -1,5 +1,5 @@
 import type { ResultAsync } from 'neverthrow'
-import type { MCPServerConfig } from '@internal/shared/contracts/mcp-server-config'
+import type { MCPServerConfig } from '@th-chat/shared/contracts/mcp-server-config'
 
 export abstract class MCPServerConfigRepo {
   readonly userId: string

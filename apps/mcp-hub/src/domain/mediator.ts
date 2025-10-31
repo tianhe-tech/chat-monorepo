@@ -1,5 +1,5 @@
 import EventEmitter from 'node:events'
-import * as Contract from '@internal/shared/contracts/chat-mcp-hub'
+import * as Contract from '@th-chat/shared/contracts/chat-mcp-hub'
 
 export class DomainMediator extends EventEmitter<{
   toolCallResult: [Contract.ToolCallResult]

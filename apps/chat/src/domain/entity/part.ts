@@ -7,7 +7,7 @@ import {
 import type { DynamicToolUIPart } from 'ai'
 import EventEmitter from 'node:events'
 import z from 'zod'
-import * as Contract from '@internal/shared/contracts/chat-mcp-hub'
+import * as Contract from '@th-chat/shared/contracts/chat-mcp-hub'
 
 export const progressPartSchema = z.object({
   progress: z.number().positive(),
