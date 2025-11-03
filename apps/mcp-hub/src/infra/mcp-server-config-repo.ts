@@ -1,14 +1,12 @@
 import { and, eq, isNull, or, sql } from 'drizzle-orm'
 import { Result, ResultAsync, err, errAsync, ok, okAsync } from 'neverthrow'
-import { db as defaultDb } from './db'
+import { db } from './db'
 import { mcpServerConfig } from './db/schema'
-import { MCPServerConfigRepo } from '../domain/port/repository'
+import type { UserMCPServerConfigRepo } from '../domain/port/repository'
 import { mcpServerConfigSchema, type MCPServerConfig } from '@th-chat/shared/contracts/mcp-server-config'
-type Database = typeof defaultDb
 type MCPServerConfigRow = typeof mcpServerConfig.$inferSelect
 
 type DrizzleMCPServerConfigRepoOptions = {
-  db?: Database
   userId: string
   scope: string
 }
@@ -37,12 +35,14 @@ const toDomainConfig = (row: MCPServerConfigRow) =>
     (error) => coerceError('map server config row', error),
   )()
 
-export class DrizzleMCPServerConfigRepo extends MCPServerConfigRepo {
-  readonly #db: Database
+export class UserMCPServerConfigRepoImpl implements UserMCPServerConfigRepo {
+  readonly #db = db
+  readonly userId: string
+  readonly scope: string
 
-  constructor({ db = defaultDb, userId, scope }: DrizzleMCPServerConfigRepoOptions) {
-    super({ userId, scope })
-    this.#db = db
+  constructor({ userId, scope }: DrizzleMCPServerConfigRepoOptions) {
+    this.userId = userId
+    this.scope = scope
   }
 
   checkExists(config: MCPServerConfig) {

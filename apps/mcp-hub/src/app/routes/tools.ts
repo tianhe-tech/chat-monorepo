@@ -4,6 +4,8 @@ import { HTTPException } from 'hono/http-exception'
 import z from 'zod'
 import { createMCPHubUseCase, NotFoundError } from '../use-case/mcp-hub.ts'
 import * as Contract from '@th-chat/shared/contracts/chat-mcp-hub'
+import { UserMCPServerConfigRepoImpl } from '../../infra/mcp-server-config-repo.ts'
+import { MCPHubCacheKeyRegistry } from '../service/mcp-hub-cache.ts'
 
 const mcpThreadIdMiddleware = zValidator(
   'header',
@@ -17,7 +19,9 @@ export default new Hono()
     const user = c.get('user')
     const { 'mcp-thread-id': threadId } = c.req.valid('header')
 
-    const result = await createMCPHubUseCase({ userId: user.id, scope: user.scope, threadId }).andThen((usecase) =>
+    const repo = new UserMCPServerConfigRepoImpl({ userId: user.id, scope: user.scope })
+    const mcpHubCacheKeyRegistry = new MCPHubCacheKeyRegistry({ userId: user.id, scope: user.scope })
+    const result = await createMCPHubUseCase({ repo, mcpHubCacheKeyRegistry, threadId }).andThen((usecase) =>
       usecase.listTools(),
     )
 
@@ -38,7 +42,9 @@ export default new Hono()
       throw new HTTPException(400, { message: 'Invalid request body', cause: error })
     }
 
-    const result = await createMCPHubUseCase({ userId: user.id, scope: user.scope, threadId }).andThen((usecase) =>
+    const repo = new UserMCPServerConfigRepoImpl({ userId: user.id, scope: user.scope })
+    const mcpHubCacheKeyRegistry = new MCPHubCacheKeyRegistry({ userId: user.id, scope: user.scope })
+    const result = await createMCPHubUseCase({ repo, mcpHubCacheKeyRegistry, threadId }).andThen((usecase) =>
       usecase.callTool(data),
     )
 

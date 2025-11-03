@@ -5,13 +5,15 @@ import { HTTPException } from 'hono/http-exception'
 import z from 'zod'
 import { createMCPServerConfigUseCase, DuplicateConfigError, NotFoundError } from '../use-case/mcp-server-config'
 import { MCPHubCacheKeyRegistry } from '../service/mcp-hub-cache'
+import { UserMCPServerConfigRepoImpl } from '../../infra/mcp-server-config-repo'
 
 export default new Hono()
   .post('/', zValidator('json', Contract.mcpServerConfigSchema), async (c) => {
     const serverConfig = c.req.valid('json')
     const user = c.get('user')
 
-    const usecase = createMCPServerConfigUseCase({ userId: user.id, scope: user.scope })
+    const repo = new UserMCPServerConfigRepoImpl({ userId: user.id, scope: user.scope })
+    const usecase = createMCPServerConfigUseCase({ repo })
 
     const result = await usecase.create({ serverConfig })
     if (result.isOk()) {
@@ -26,7 +28,8 @@ export default new Hono()
   .get('/', async (c) => {
     const user = c.get('user')
 
-    const usecase = createMCPServerConfigUseCase({ userId: user.id, scope: user.scope })
+    const repo = new UserMCPServerConfigRepoImpl({ userId: user.id, scope: user.scope })
+    const usecase = createMCPServerConfigUseCase({ repo })
 
     const result = await usecase.getMany()
     if (result.isOk()) {
@@ -38,7 +41,8 @@ export default new Hono()
     const { id } = c.req.valid('param')
     const user = c.get('user')
 
-    const usecase = createMCPServerConfigUseCase({ userId: user.id, scope: user.scope })
+    const repo = new UserMCPServerConfigRepoImpl({ userId: user.id, scope: user.scope })
+    const usecase = createMCPServerConfigUseCase({ repo })
 
     const result = await usecase.getById({ id })
     if (result.isErr()) {
@@ -58,7 +62,8 @@ export default new Hono()
       const user = c.get('user')
       const serverConfig = c.req.valid('json')
 
-      const usecase = createMCPServerConfigUseCase({ userId: user.id, scope: user.scope })
+      const repo = new UserMCPServerConfigRepoImpl({ userId: user.id, scope: user.scope })
+      const usecase = createMCPServerConfigUseCase({ repo })
       const registry = new MCPHubCacheKeyRegistry({ userId: user.id, scope: user.scope })
 
       const result = await usecase.update({ id, serverConfig })
@@ -77,7 +82,8 @@ export default new Hono()
     const { id } = c.req.valid('param')
     const user = c.get('user')
 
-    const usecase = createMCPServerConfigUseCase({ userId: user.id, scope: user.scope })
+    const repo = new UserMCPServerConfigRepoImpl({ userId: user.id, scope: user.scope })
+    const usecase = createMCPServerConfigUseCase({ repo })
     const registry = new MCPHubCacheKeyRegistry({ userId: user.id, scope: user.scope })
 
     const result = await usecase.delete({ id })
