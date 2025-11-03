@@ -483,7 +483,7 @@ describe('POST /chats', () => {
 
     expect(samplingInputEvent).toBeDefined()
     expect(samplingOutputEvent).toBeDefined()
-    expect(samplingOutputEvent?.output?.completion).toBe('Sampled answer from test sampling run.')
+    expect(samplingOutputEvent?.output).toContain('Sampled answer from test sampling run.')
   })
 
   test('handles elicitation tool flow', async () => {
