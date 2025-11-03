@@ -6,17 +6,20 @@ import z from 'zod'
 import { createMCPServerConfigUseCase, DuplicateConfigError, NotFoundError } from '../use-case/mcp-server-config'
 import { MCPHubCacheKeyRegistry } from '../service/mcp-hub-cache'
 import { UserMCPServerConfigRepoImpl } from '../../infra/mcp-server-config-repo'
+import { db } from '../../infra/db'
 
 export default new Hono()
   .post('/', zValidator('json', Contract.mcpServerConfigSchema), async (c) => {
     const serverConfig = c.req.valid('json')
     const user = c.get('user')
 
-    const repo = new UserMCPServerConfigRepoImpl({ userId: user.id, scope: user.scope })
+    const repo = new UserMCPServerConfigRepoImpl({ userId: user.id, scope: user.scope, db })
     const usecase = createMCPServerConfigUseCase({ repo })
+    const registry = new MCPHubCacheKeyRegistry({ userId: user.id, scope: user.scope })
 
-    const result = await usecase.create({ serverConfig })
+    const result = await usecase.upsert({ serverConfig })
     if (result.isOk()) {
+      registry.invalidate()
       return c.json(result.value, 201)
     }
 
@@ -28,7 +31,7 @@ export default new Hono()
   .get('/', async (c) => {
     const user = c.get('user')
 
-    const repo = new UserMCPServerConfigRepoImpl({ userId: user.id, scope: user.scope })
+    const repo = new UserMCPServerConfigRepoImpl({ userId: user.id, scope: user.scope, db })
     const usecase = createMCPServerConfigUseCase({ repo })
 
     const result = await usecase.getMany()
@@ -41,7 +44,7 @@ export default new Hono()
     const { id } = c.req.valid('param')
     const user = c.get('user')
 
-    const repo = new UserMCPServerConfigRepoImpl({ userId: user.id, scope: user.scope })
+    const repo = new UserMCPServerConfigRepoImpl({ userId: user.id, scope: user.scope, db })
     const usecase = createMCPServerConfigUseCase({ repo })
 
     const result = await usecase.getById({ id })
@@ -62,11 +65,11 @@ export default new Hono()
       const user = c.get('user')
       const serverConfig = c.req.valid('json')
 
-      const repo = new UserMCPServerConfigRepoImpl({ userId: user.id, scope: user.scope })
+      const repo = new UserMCPServerConfigRepoImpl({ userId: user.id, scope: user.scope, db })
       const usecase = createMCPServerConfigUseCase({ repo })
       const registry = new MCPHubCacheKeyRegistry({ userId: user.id, scope: user.scope })
 
-      const result = await usecase.update({ id, serverConfig })
+      const result = await usecase.upsert({ serverConfig: { ...serverConfig, id } })
       if (result.isOk()) {
         registry.invalidate()
         c.status(204)
@@ -75,6 +78,9 @@ export default new Hono()
       if (result.error instanceof NotFoundError) {
         throw new HTTPException(404, { cause: result.error })
       }
+      if (result.error instanceof DuplicateConfigError) {
+        throw new HTTPException(400, { message: '重复的 MCP Server 配置（名称或 URL）', cause: result.error })
+      }
       throw new HTTPException(500, { cause: result.error })
     },
   )
@@ -82,7 +88,7 @@ export default new Hono()
     const { id } = c.req.valid('param')
     const user = c.get('user')
 
-    const repo = new UserMCPServerConfigRepoImpl({ userId: user.id, scope: user.scope })
+    const repo = new UserMCPServerConfigRepoImpl({ userId: user.id, scope: user.scope, db })
     const usecase = createMCPServerConfigUseCase({ repo })
     const registry = new MCPHubCacheKeyRegistry({ userId: user.id, scope: user.scope })
 

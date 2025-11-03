@@ -1,18 +1,17 @@
-import { and, eq, isNull, or, sql } from 'drizzle-orm'
-import { Result, ResultAsync, err, errAsync, ok, okAsync } from 'neverthrow'
-import { db } from './db'
+// oxlint-disable default-case
+import { and, eq, isNull, sql } from 'drizzle-orm'
+import { Result, ResultAsync, errAsync, ok, okAsync } from 'neverthrow'
+import type { db } from './db'
 import { mcpServerConfig } from './db/schema'
-import type { UserMCPServerConfigRepo } from '../domain/port/repository'
+import { MCPServerConfigDuplicateError, type UserMCPServerConfigRepo } from '../domain/port/repository'
 import { mcpServerConfigSchema, type MCPServerConfig } from '@th-chat/shared/contracts/mcp-server-config'
 type MCPServerConfigRow = typeof mcpServerConfig.$inferSelect
 
-type DrizzleMCPServerConfigRepoOptions = {
+type CtorParams = {
   userId: string
   scope: string
+  db: typeof db
 }
-
-const unsupportedTransportError = (transport: string) =>
-  new Error(`Transport "${transport}" is not supported by the persistent MCP repository`)
 
 const coerceError = (operation: string, error: unknown) => {
   if (error instanceof Error) {
@@ -21,77 +20,104 @@ const coerceError = (operation: string, error: unknown) => {
   return new Error(`Failed to ${operation}: ${String(error)}`)
 }
 
+const extractPgError = (error: unknown): { code?: string; detail?: string } | undefined => {
+  if (!error || typeof error !== 'object') {
+    return undefined
+  }
+
+  if ('code' in error || 'detail' in error) {
+    return error as { code?: string; detail?: string }
+  }
+
+  if ('cause' in error) {
+    return extractPgError((error as { cause?: unknown }).cause)
+  }
+
+  return undefined
+}
+
+const mapDbError = (operation: string, error: unknown) => {
+  const pgError = extractPgError(error)
+  if (pgError?.code === '23505') {
+    return new MCPServerConfigDuplicateError(pgError.detail ?? 'Duplicate MCP server config detected')
+  }
+  return coerceError(operation, error)
+}
+
 const toDomainConfig = (row: MCPServerConfigRow) =>
   Result.fromThrowable(
-    () => ({
-      id: row.id,
-      ...mcpServerConfigSchema.parse({
-        name: row.name,
-        transport: row.transport,
-        url: row.url,
-        requestInit: row.requestInit ?? undefined,
-      }),
-    }),
+    () => {
+      const payload = (() => {
+        switch (row.transport) {
+          case 'stdio': {
+            if (!row.command || row.command.length === 0) {
+              throw new Error(`Stdio transport requires a command`)
+            }
+            return {
+              name: row.name,
+              transport: row.transport,
+              command: row.command,
+            } as const
+          }
+          case 'sse':
+          case 'streamable_http': {
+            if (!row.url) {
+              throw new Error(`${row.transport} transport requires a URL`)
+            }
+            return {
+              name: row.name,
+              transport: row.transport,
+              url: row.url,
+              requestInit: row.requestInit ?? undefined,
+            } as const
+          }
+        }
+      })()
+
+      return {
+        id: row.id,
+        ...mcpServerConfigSchema.parse(payload),
+      }
+    },
     (error) => coerceError('map server config row', error),
   )()
 
 export class UserMCPServerConfigRepoImpl implements UserMCPServerConfigRepo {
-  readonly #db = db
+  readonly #db: typeof db
   readonly userId: string
   readonly scope: string
 
-  constructor({ userId, scope }: DrizzleMCPServerConfigRepoOptions) {
+  constructor({ userId, scope, db }: CtorParams) {
     this.userId = userId
     this.scope = scope
+    this.#db = db
   }
 
-  checkExists(config: MCPServerConfig) {
-    const { name } = config
-    const url = this.#getUrl(config)
+  upsert(config: MCPServerConfig & { id?: number }) {
+    const { id, ...rest } = config
+    const serverConfig = rest as MCPServerConfig
 
-    return ResultAsync.fromPromise(
-      this.#db.query.mcpServerConfig.findFirst({
-        where: (table) => {
-          const baseConditions = [
-            eq(table.userId, this.userId),
-            eq(table.scope, this.scope),
-            isNull(table.deletedAt),
-          ] as const
+    if (id === undefined) {
+      const rowResult = this.#toInsertRow(serverConfig)
+      if (rowResult.isErr()) {
+        return errAsync(rowResult.error)
+      }
 
-          if (url) {
-            return and(...baseConditions, or(eq(table.name, name), eq(table.url, url)))
-          }
-
-          return and(...baseConditions, eq(table.name, name))
-        },
-        columns: { id: true },
-      }),
-      (error) => coerceError('check config existence', error),
-    ).map((result) => result !== undefined)
-  }
-
-  create(config: MCPServerConfig) {
-    const rowResult = this.#toInsertRow(config)
-    if (rowResult.isErr()) {
-      return errAsync(rowResult.error)
+      return ResultAsync.fromPromise(
+        this.#db.insert(mcpServerConfig).values(rowResult.value).returning({ id: mcpServerConfig.id }),
+        (error) => mapDbError('create MCP server config', error),
+      ).andThen((rows) => {
+        const first = rows.at(0)
+        if (!first) {
+          return errAsync(new Error('Insert succeeded but no identifier was returned'))
+        }
+        return okAsync(first.id)
+      })
     }
 
-    return ResultAsync.fromPromise(
-      this.#db.insert(mcpServerConfig).values(rowResult.value).returning({ id: mcpServerConfig.id }),
-      (error) => coerceError('create MCP server config', error),
-    ).andThen((rows) => {
-      const first = rows.at(0)
-      if (!first) {
-        return errAsync(new Error('Insert succeeded but no identifier was returned'))
-      }
-      return okAsync(first.id)
-    })
-  }
-
-  update(id: number, updateValue: MCPServerConfig) {
     let payload: Partial<MCPServerConfigRow>
     try {
-      payload = this.#toUpdatePayload(updateValue)
+      payload = this.#toUpdatePayload(serverConfig)
     } catch (error) {
       return errAsync(coerceError('prepare update payload', error))
     }
@@ -105,8 +131,14 @@ export class UserMCPServerConfigRepoImpl implements UserMCPServerConfigRepo {
         })
         .where(this.#byIdScope(id))
         .returning({ id: mcpServerConfig.id }),
-      (error) => coerceError('update MCP server config', error),
-    ).map(() => undefined)
+      (error) => mapDbError('update MCP server config', error),
+    ).andThen((rows) => {
+      const first = rows.at(0)
+      if (!first) {
+        return errAsync(new Error(`Update failed for MCP Server Config ID ${id}`))
+      }
+      return okAsync(first.id)
+    })
   }
 
   getMany() {
@@ -114,6 +146,7 @@ export class UserMCPServerConfigRepoImpl implements UserMCPServerConfigRepo {
       this.#db.query.mcpServerConfig.findMany({
         where: (table, { and, eq, isNull }) =>
           and(eq(table.userId, this.userId), eq(table.scope, this.scope), isNull(table.deletedAt)),
+        orderBy: (table, { desc }) => desc(table.id),
       }),
       (error) => coerceError('list MCP server configs', error),
     ).andThen((rows) => this.#mapRows(rows))
@@ -162,38 +195,51 @@ export class UserMCPServerConfigRepoImpl implements UserMCPServerConfigRepo {
   }
 
   #toInsertRow(config: MCPServerConfig) {
-    if (config.transport === 'stdio') {
-      return err(unsupportedTransportError(config.transport))
+    switch (config.transport) {
+      case 'stdio':
+        return ok({
+          userId: this.userId,
+          scope: this.scope,
+          name: config.name,
+          transport: config.transport,
+          command: config.command,
+          url: null,
+          requestInit: null,
+        })
+      case 'sse':
+      case 'streamable_http':
+        return ok({
+          userId: this.userId,
+          scope: this.scope,
+          name: config.name,
+          transport: config.transport,
+          url: config.url,
+          command: null,
+          requestInit: config.requestInit ?? null,
+        })
     }
-
-    return ok({
-      userId: this.userId,
-      scope: this.scope,
-      name: config.name,
-      transport: config.transport,
-      url: config.url,
-      requestInit: config.requestInit ?? null,
-    })
   }
 
   #toUpdatePayload(config: MCPServerConfig) {
-    if (config.transport === 'stdio') {
-      throw unsupportedTransportError(config.transport)
+    switch (config.transport) {
+      case 'stdio':
+        return {
+          name: config.name,
+          transport: config.transport,
+          command: config.command,
+          url: null,
+          requestInit: null,
+        }
+      case 'sse':
+      case 'streamable_http':
+        return {
+          name: config.name,
+          transport: config.transport,
+          command: null,
+          url: config.url,
+          requestInit: config.requestInit ?? null,
+        }
     }
-
-    return {
-      name: config.name,
-      transport: config.transport,
-      url: config.url,
-      requestInit: config.requestInit ?? null,
-    }
-  }
-
-  #getUrl(config: MCPServerConfig) {
-    if (config.transport === 'streamable_http' || config.transport === 'sse') {
-      return config.url
-    }
-    return undefined
   }
 
   #byIdScope(id: number) {
