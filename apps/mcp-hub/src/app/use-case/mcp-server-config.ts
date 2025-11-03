@@ -1,17 +1,18 @@
 import type { MCPServerConfig } from '@th-chat/shared/contracts/mcp-server-config'
 import { errAsync } from 'neverthrow'
-import { DrizzleMCPServerConfigRepo } from '../../infra/mcp-server-config-repo'
+import type { UserMCPServerConfigRepo } from '../../domain/port/repository'
 
 export class DuplicateConfigError extends Error {}
 export class NotFoundError extends Error {}
 
-export function createMCPServerConfigUseCase(props: { userId: string; scope: string }) {
-  const { userId, scope } = props
-  const repo = new DrizzleMCPServerConfigRepo({ userId, scope })
+type Params = {
+  repo: UserMCPServerConfigRepo
+}
 
+export function createMCPServerConfigUseCase({ repo }: Params) {
   return {
-    create(props: { serverConfig: MCPServerConfig }) {
-      const { serverConfig } = props
+    create(params: { serverConfig: MCPServerConfig }) {
+      const { serverConfig } = params
 
       return repo.checkExists(serverConfig).andThen((exists) => {
         if (exists) {
@@ -20,8 +21,8 @@ export function createMCPServerConfigUseCase(props: { userId: string; scope: str
         return repo.create(serverConfig)
       })
     },
-    delete(props: { id: number }) {
-      const { id } = props
+    delete(params: { id: number }) {
+      const { id } = params
 
       return repo.getById(id).andThen((exists) => {
         if (!exists) {
@@ -30,8 +31,8 @@ export function createMCPServerConfigUseCase(props: { userId: string; scope: str
         return repo.delete(id)
       })
     },
-    update(props: { id: number; serverConfig: MCPServerConfig }) {
-      const { id, serverConfig } = props
+    update(params: { id: number; serverConfig: MCPServerConfig }) {
+      const { id, serverConfig } = params
 
       return repo.getById(id).andThen((exists) => {
         if (!exists) {
@@ -43,8 +44,8 @@ export function createMCPServerConfigUseCase(props: { userId: string; scope: str
     getMany() {
       return repo.getMany()
     },
-    getById(props: { id: number }) {
-      const { id } = props
+    getById(params: { id: number }) {
+      const { id } = params
 
       return repo.getById(id)
     },

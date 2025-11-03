@@ -4,19 +4,22 @@ import { err, ok, okAsync } from 'neverthrow'
 import { DomainMediator } from '../../domain/mediator'
 import { MCPHubService } from '../../domain/service/mcp-hub'
 import { MCPClientImpl } from '../../infra/mcp-client'
-import { DrizzleMCPServerConfigRepo } from '../../infra/mcp-server-config-repo'
 import { ValkeyChatComm } from '../../infra/valkey-chat-comm'
 import { env } from '../env'
 import { getMCPHubCache, MCPHubCacheKeyRegistry } from '../service/mcp-hub-cache'
+import type { UserMCPServerConfigRepo } from '../../domain/port/repository'
 
 export class NotFoundError extends Error {}
 
-export const createMCPHubUseCase = (props: { userId: string; scope: string; threadId: string }) => {
-  const { userId, scope, threadId } = props
-  const logger = consola.withTag(`[${threadId}] MCP Hub`)
+type Params = {
+  repo: UserMCPServerConfigRepo
+  mcpHubCacheKeyRegistry: MCPHubCacheKeyRegistry
+  threadId: string
+}
 
-  const repo = new DrizzleMCPServerConfigRepo({ userId, scope })
-  const cacheKeyRegistry = new MCPHubCacheKeyRegistry({ userId, scope })
+export const createMCPHubUseCase = ({ repo, mcpHubCacheKeyRegistry, threadId }: Params) => {
+  const logger = consola.withTag(`MCPHub:${threadId}`)
+
   const mcphubCache = getMCPHubCache()
   const domainMediator = new DomainMediator()
 
@@ -38,25 +41,25 @@ export const createMCPHubUseCase = (props: { userId: string; scope: string; thre
       .andThen((configs) =>
         ValkeyChatComm.create({
           mediator: domainMediator,
-          logger: consola.withTag(`[${threadId}] Chat Comm`),
+          logger: consola.withTag(`ChatComm:${threadId}`),
           valkeyAddresses: env.VALKEY_ADDRESSES,
         }).map((chatComm) => {
           const mcphub = new MCPHubService({
             id: threadId,
             servers: configs,
-            logger: consola.withTag(`[${threadId}] MCP Hub Service`),
+            logger: consola.withTag(`MCPHubService:${threadId}`),
             mediator: domainMediator,
             mcpClientFactory: (config) =>
               new MCPClientImpl({
                 config,
-                logger: consola.withTag(`[${threadId}] MCP Client ${config.name}`),
+                logger: consola.withTag(`MCPClient:${config.name}`),
               }),
           })
 
           mcphub.disposableStack.use(chatComm)
           mcphub.disposableStack.defer(() => void domainMediator.removeAllListeners())
           mcphubCache.set(threadId, mcphub)
-          cacheKeyRegistry.register(threadId)
+          mcpHubCacheKeyRegistry.register(threadId)
           return mcphub
         }),
       )
