@@ -56,7 +56,10 @@ export function createChatUseCase({ userId, scope, threadId, mcphubSignal }: Par
         .andThen((uiMessages) => {
           const message = new Message({ mediator, message: uiMessages.at(-1)!, threadId })
           mediator.on('mcpToolCallResult', ({ id, data }) => {
-            message.resolveContinuationResult(id, data)
+            if (id !== threadId) {
+              return
+            }
+            message.resolveContinuationResult(data.toolCallId, data)
           })
           return ResultAsync.fromSafePromise(message.followupElicitationResult().then(() => message.markContinuation()))
             .andThen(() => getMCPTools)
