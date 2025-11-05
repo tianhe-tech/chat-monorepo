@@ -23,6 +23,6 @@ const streamableHttpSchema = httpSchemaBase.extend({
   transport: z.literal('streamable_http'),
 })
 
-export const mcpServerConfigSchema = z.discriminatedUnion('transport', [stdioSchema, sseSchema, streamableHttpSchema])
+export const mcpServerConfigSchema = z.discriminatedUnion('transport', [streamableHttpSchema, sseSchema, stdioSchema])
 
 export type MCPServerConfig = z.infer<typeof mcpServerConfigSchema>

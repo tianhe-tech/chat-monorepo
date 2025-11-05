@@ -9,8 +9,11 @@ catalog:
   '@ai-sdk/vue': 2.0.68
   '@dotenvx/dotenvx': ^1.51.0
   '@hono/node-server': ^1.19.4
+  '@hono/swagger-ui': ^0.5.2
+  '@hono/zod-openapi': 1.1.4
   '@hono/zod-validator': ^0.7.3
   '@modelcontextprotocol/sdk': ^1.20.0
+  '@scalar/hono-api-reference': 0.9.23
   ai: 5.0.68
   hono: ^4.9.9
   neverthrow: 8.2.0

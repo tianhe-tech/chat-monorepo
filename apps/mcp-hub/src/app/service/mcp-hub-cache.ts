@@ -22,8 +22,8 @@ const buildRegistryKey = ({ userId, scope }: UserInfo) => `${userId}:${scope}`
 export class MCPHubCacheKeyRegistry {
   #registryKey: string
 
-  constructor(props: UserInfo) {
-    this.#registryKey = buildRegistryKey(props)
+  constructor(params: UserInfo) {
+    this.#registryKey = buildRegistryKey(params)
   }
 
   register(cacheKey: string) {
