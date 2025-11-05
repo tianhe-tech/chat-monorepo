@@ -6,6 +6,12 @@ settings:
 
 catalogs:
   default:
+    '@ai-sdk/provider':
+      specifier: 2.0.0
+      version: 2.0.0
+    '@ai-sdk/vue':
+      specifier: 2.0.68
+      version: 2.0.68
     '@dotenvx/dotenvx':
       specifier: ^1.51.0
       version: 1.51.0
@@ -13,7 +19,7 @@ catalogs:
       specifier: ^1.19.4
       version: 1.19.4
     '@hono/zod-openapi':
-      specifier: ^1.1.4
+      specifier: 1.1.4
       version: 1.1.4
     '@hono/zod-validator':
       specifier: ^0.7.3
@@ -22,7 +28,7 @@ catalogs:
       specifier: ^1.20.0
       version: 1.20.0
     '@scalar/hono-api-reference':
-      specifier: ^0.9.23
+      specifier: 0.9.23
       version: 0.9.23
     ai:
       specifier: 5.0.68
@@ -33,6 +39,9 @@ catalogs:
     neverthrow:
       specifier: 8.2.0
       version: 8.2.0
+    reka-ui:
+      specifier: ^2.5.0
+      version: 2.5.1
     zod:
       specifier: ^4.1.9
       version: 4.1.9
@@ -90,12 +99,18 @@ importers:
       '@hono/node-server':
         specifier: 'catalog:'
         version: 1.19.4(hono@4.9.9)
+      '@hono/zod-openapi':
+        specifier: 'catalog:'
+        version: 1.1.4(hono@4.9.9)(zod@4.1.9)
       '@hono/zod-validator':
         specifier: 'catalog:'
         version: 0.7.3(hono@4.9.9)(zod@4.1.9)
       '@modelcontextprotocol/sdk':
         specifier: 'catalog:'
         version: 1.20.0
+      '@scalar/hono-api-reference':
+        specifier: 'catalog:'
+        version: 0.9.23(hono@4.9.9)
       '@t3-oss/env-core':
         specifier: ^0.13.8
         version: 0.13.8(typescript@5.9.2)(zod@4.1.9)

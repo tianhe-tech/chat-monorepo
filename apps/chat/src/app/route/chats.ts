@@ -1,24 +1,35 @@
-import { zValidator } from '@hono/zod-validator'
+import { createDeepSeek } from '@ai-sdk/deepseek'
+import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi'
 import { createUIMessageStream, createUIMessageStreamResponse, validateUIMessages } from 'ai'
-import { Hono } from 'hono'
+import consola from 'consola'
+import { HTTPException } from 'hono/http-exception'
 import { ResultAsync } from 'neverthrow'
-import z from 'zod'
 import type { UIMessageType } from '../../domain/entity/message'
 import { progressPartSchema } from '../../domain/entity/part'
-import { HTTPException } from 'hono/http-exception'
 import { createChatUseCase } from '../use-case/chat'
-import consola from 'consola'
-import { createDeepSeek } from '@ai-sdk/deepseek'
 
-export default new Hono().post(
-  '/',
-  zValidator(
-    'json',
-    z.object({
-      message: z.unknown(),
-      threadId: z.string(),
-    }),
-  ),
+export default new OpenAPIHono().openapi(
+  createRoute({
+    method: 'post',
+    path: '/',
+    request: {
+      body: {
+        content: {
+          'application/json': {
+            schema: z.object({
+              message: z.unknown(),
+              threadId: z.string(),
+            }),
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: '流式输出',
+      },
+    },
+  }),
   async (c) => {
     const body = c.req.valid('json')
     const user = c.get('user')
