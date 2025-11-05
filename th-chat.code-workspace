@@ -1,10 +1,6 @@
 {
   "folders": [
     {
-      "name": "🚀 @th-chat/mcp-hub",
-      "path": "apps/mcp",
-    },
-    {
       "name": "✨ th-chat",
       "path": ".",
     },
