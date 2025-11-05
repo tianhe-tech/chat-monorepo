@@ -12,7 +12,7 @@ app
   .doc('/doc', {
     openapi: '3.0.0',
     info: {
-      title: 'MCP Hub API',
+      title: 'Chat API',
       version: '1',
     },
   })

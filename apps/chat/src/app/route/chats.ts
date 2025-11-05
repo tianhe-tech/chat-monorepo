@@ -26,7 +26,7 @@ export default new OpenAPIHono().openapi(
     },
     responses: {
       200: {
-        description: '流式输出',
+        description: 'Streaming output',
       },
     },
   }),

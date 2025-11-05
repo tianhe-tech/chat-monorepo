@@ -13,8 +13,8 @@ const mcpServerConfigWithIdSchema = Contract.mcpServerConfigSchema.and(
 )
 
 const configIdParamSchema = z.object({
-  // 这里直接用 `z.coerce.number()` 会导致 scalar ui 字段有问题
-  // 解决方案来自 https://github.com/honojs/middleware/issues/368#issuecomment-1974821532
+  // Using z.coerce.number() directly causes issues with scalar UI fields.
+  // Solution from https://github.com/honojs/middleware/issues/368#issuecomment-1974821532
   id: z.string().pipe(z.coerce.number()),
 })
 
@@ -71,7 +71,7 @@ export default new OpenAPIHono()
     createRoute({
       method: 'get',
       path: '/',
-      description: '列出用户的 MCP Server 配置',
+      description: 'List user MCP Server configurations',
       responses: {
         200: {
           description: '配置列表',
@@ -100,7 +100,7 @@ export default new OpenAPIHono()
     createRoute({
       method: 'get',
       path: '/{id}',
-      description: '按 ID 获取 MCP Server 配置',
+      description: 'Get MCP Server configuration by ID',
       request: {
         params: configIdParamSchema,
       },
@@ -139,7 +139,7 @@ export default new OpenAPIHono()
     createRoute({
       method: 'put',
       path: '/{id}',
-      description: '更新 MCP Server 配置',
+      description: 'Update MCP Server configuration',
       request: {
         params: configIdParamSchema,
         body: {
@@ -152,7 +152,7 @@ export default new OpenAPIHono()
       },
       responses: {
         204: {
-          description: '更新成功',
+          description: 'Updated successfully',
         },
         400: {
           description: '重复的 MCP Server 配置（名称或 URL）',
@@ -190,16 +190,16 @@ export default new OpenAPIHono()
     createRoute({
       method: 'delete',
       path: '/{id}',
-      description: '删除 MCP Server 配置',
+      description: 'Delete MCP Server configuration',
       request: {
         params: configIdParamSchema,
       },
       responses: {
         204: {
-          description: '删除成功',
+          description: 'Deleted successfully',
         },
         404: {
-          description: '配置不存在',
+          description: 'Configuration not found',
         },
       },
     }),
