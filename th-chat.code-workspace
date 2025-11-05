@@ -1,6 +1,10 @@
 {
   "folders": [
     {
+      "name": "🚀 @th-chat/mcp-hub",
+      "path": "apps/mcp",
+    },
+    {
       "name": "✨ th-chat",
       "path": ".",
     },
@@ -10,7 +14,7 @@
     },
     {
       "name": "🚀 @th-chat/mcp-hub",
-      "path": "apps/mcp",
+      "path": "apps/mcp-hub",
     },
     {
       "name": "📦 @th-chat/design",
@@ -25,7 +29,7 @@
       "path": "packages/test-utils",
     },
     {
-      "name": "📦 @internal/tsconfig",
+      "name": "📦 @th-chat/tsconfig",
       "path": "packages/tsconfig",
     },
     {

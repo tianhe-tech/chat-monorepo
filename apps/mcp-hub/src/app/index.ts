@@ -3,6 +3,8 @@ import { consola } from 'consola'
 import { gracefulExit } from 'exit-hook'
 import { env } from './env'
 import app from './routes'
+import { OpenAPIHono } from '@hono/zod-openapi'
+import { Scalar } from '@scalar/hono-api-reference'
 
 consola.wrapConsole()
 consola.options.formatOptions.colors = true

@@ -27,7 +27,7 @@ beforeAll(async () => {
 
   usecase = (
     await createMCPHubUseCase({
-      repo: new UserMCPServerConfigRepoImpl({ userId, scope }),
+      repo: new UserMCPServerConfigRepoImpl({ userId, scope, db }),
       mcpHubCacheKeyRegistry: new MCPHubCacheKeyRegistry({ userId, scope }),
       threadId: 'test-thread-id',
     })
