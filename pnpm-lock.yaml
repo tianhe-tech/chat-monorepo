@@ -117,12 +117,6 @@ importers:
       '@t3-oss/env-core':
         specifier: ^0.13.8
         version: 0.13.8(typescript@5.9.2)(zod@4.1.9)
-      '@th-chat/mcp-hub':
-        specifier: workspace:*
-        version: link:../mcp-hub
-      '@th-chat/shared':
-        specifier: workspace:*
-        version: link:../../packages/shared
       '@valkey/valkey-glide':
         specifier: ^2.1.0
         version: 2.1.0
@@ -184,6 +178,12 @@ importers:
       '@testcontainers/valkey':
         specifier: catalog:test
         version: 11.6.0
+      '@th-chat/mcp-hub':
+        specifier: workspace:*
+        version: link:../mcp-hub
+      '@th-chat/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       '@th-chat/test-utils':
         specifier: workspace:*
         version: link:../../packages/test-utils
