@@ -1,0 +1,5 @@
+{
+  "extends": "@th-chat/tsconfig/node.tsconfig.json",
+  "exclude": ["node_modules", "dist"],
+  "include": ["src"]
+}

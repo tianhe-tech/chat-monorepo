@@ -1,4 +1,4 @@
-# chat monorepo (working title)
+# th-chat (working title)
 
 <!-- TODO: Replace with actual repository name -->
 
@@ -144,5 +144,3 @@ TBD
 ## Acknowledgements
 
 This project builds upon [ai-sdk](https://ai-sdk.dev) and the broader AI development ecosystem.
-
-<!-- TODO: Add specific links and acknowledgements as the project develops -->

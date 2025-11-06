@@ -1,5 +1,9 @@
 {
   "$schema": "https://turbo.build/schema.json",
-  "tasks": {},
+  "tasks": {
+    "integration": {
+      "with": ["@th-chat/chat#dev", "demo-vue#dev"]
+    }
+  },
   "ui": "tui"
 }

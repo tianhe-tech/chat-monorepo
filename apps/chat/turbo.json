@@ -1,0 +1,12 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "extends": ["//"],
+  "tasks": {
+    "dev": {
+      "persistent": true,
+      "with": ["@th-chat/mcp-hub#dev"],
+      "passThroughEnv": ["DEEPSEEK_API_KEY"]
+    },
+    "test": {}
+  }
+}

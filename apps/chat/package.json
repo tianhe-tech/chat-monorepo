@@ -1,0 +1,80 @@
+{
+  "name": "@th-chat/chat",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "",
+  "main": "./dist/index.js",
+  "scripts": {
+    "dev": "dotenvx run -- tsx --watch src/app/index.ts",
+    "build": "tsdown",
+    "type-check": "tsc --noEmit",
+    "start": "dotenvx run -- node dist/app/index.js",
+    "test": "dotenvx run -- vitest run",
+    "test:dev": "dotenvx run -- vitest",
+    "mastra:dev": "dotenvx run -- mastra dev",
+    "db:generate": "dotenvx run -- drizzle-kit generate",
+    "db:migrate": "dotenvx run -- drizzle-kit migrate",
+    "db:push": "dotenvx run -- drizzle-kit push",
+    "db:pull": "dotenvx run -- drizzle-kit pull",
+    "db:studio": "dotenvx run -- drizzle-kit studio",
+    "prepublishOnly": "pnpm run build"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@ai-sdk/ui-utils": "^1.2.11",
+    "@dotenvx/dotenvx": "catalog:",
+    "@hono/node-server": "catalog:",
+    "@hono/zod-openapi": "catalog:",
+    "@hono/zod-validator": "catalog:",
+    "@modelcontextprotocol/sdk": "catalog:",
+    "@scalar/hono-api-reference": "catalog:",
+    "@t3-oss/env-core": "^0.13.8",
+    "@th-chat/mcp-hub": "workspace:*",
+    "@th-chat/shared": "workspace:*",
+    "@valkey/valkey-glide": "^2.1.0",
+    "ai": "catalog:",
+    "consola": "^3.4.2",
+    "destr": "^2.0.5",
+    "drizzle-orm": "^0.44.5",
+    "exit-hook": "^4.0.0",
+    "go-go-try": "^6.2.0",
+    "hono": "catalog:",
+    "ky": "^1.11.0",
+    "neverthrow": "catalog:",
+    "p-timeout": "^7.0.1",
+    "pg": "^8.16.3",
+    "zod": "catalog:",
+    "zod-from-json-schema": "^0.5.0",
+    "zodv3": "npm:zod@^3.25.76"
+  },
+  "devDependencies": {
+    "@ai-sdk/deepseek": "^1.0.23",
+    "@ai-sdk/provider": "catalog:",
+    "@ai-sdk/provider-utils": "^3.0.14",
+    "@testcontainers/postgresql": "catalog:test",
+    "@testcontainers/valkey": "catalog:test",
+    "@th-chat/test-utils": "workspace:*",
+    "@th-chat/tsconfig": "workspace:*",
+    "@types/node": "^24.5.2",
+    "@types/pg": "^8.15.5",
+    "drizzle-kit": "^0.31.4",
+    "tsdown": "^0.15.2",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2",
+    "vitest": "catalog:test"
+  },
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    "./domain": "./src/domain/index.ts",
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "exports": {
+      "./domain": "./dist/domain.js",
+      "./package.json": "./package.json"
+    }
+  }
+}

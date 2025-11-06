@@ -1,0 +1,26 @@
+### 
+
+@hostname = localhost
+@port = 3001
+@threadId = {{$uuid}}
+
+
+### Basic Chat
+
+# @accept chunked
+
+POST http://{{hostname}}:{{port}}/chats HTTP/1.1
+
+{
+  "message": {
+    "id": "{{$uuid}}",
+    "parts": [
+      {
+        "text": "帮我提交一个作业到Slurm集群，要求2个CPU，4GB内存，运行时间1小时，作业内容是运行一个Python脚本打印Hello World。",
+        "type": "text"
+      }
+    ],
+    "role": "user"
+  },
+  "threadId": "{{threadId}}"
+}

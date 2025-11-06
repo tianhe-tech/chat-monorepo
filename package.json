@@ -1,5 +1,5 @@
 {
-  "name": "chat-monorepo",
+  "name": "th-chat",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -9,12 +9,17 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "packageManager": "pnpm@10.15.0+sha512.486ebc259d3e999a4e8691ce03b5cac4a71cbeca39372a9b762cb500cfdf0873e2cb16abe3d951b1ee2cf012503f027b98b6584e4df22524e0c7450d9ec7aa7b",
+  "packageManager": "pnpm@10.20.0",
   "devDependencies": {
+    "@changesets/cli": "^2.29.7",
     "@prettier/plugin-oxc": "^0.0.4",
-    "oxlint": "^1.11.1",
+    "@testcontainers/postgresql": "catalog:test",
+    "@testcontainers/valkey": "catalog:test",
+    "@th-chat/tsconfig": "workspace:*",
+    "oxlint": "^1.22.0",
     "prettier": "^3.6.2",
     "prettier-plugin-tailwindcss": "^0.6.14",
-    "turbo": "^2.5.6"
+    "turbo": "^2.5.8",
+    "vitest": "catalog:test"
   }
 }

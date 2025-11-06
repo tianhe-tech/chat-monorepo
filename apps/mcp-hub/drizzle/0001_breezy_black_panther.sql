@@ -1,0 +1,1 @@
+ALTER TYPE "mcp"."transport" ADD VALUE 'stdio';

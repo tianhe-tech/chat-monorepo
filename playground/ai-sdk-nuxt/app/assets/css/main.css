@@ -1,5 +1,0 @@
-@import 'tailwindcss';
-@import '@nuxt/ui';
-@import '@chat-monorepo/design';
-
-@source '../../../node_modules/@chat-monorepo/design';

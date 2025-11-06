@@ -1,31 +1,42 @@
 {
-  "name": "@chat-monorepo/shared",
+  "name": "@th-chat/shared",
   "version": "1.0.0",
   "description": "",
-  "main": "./dist/index.mjs",
-  "scripts": {
-    "build": "tsdown"
-  },
+  "private": true,
+  "type": "module",
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "packageManager": "pnpm@10.15.0",
   "devDependencies": {
+    "@modelcontextprotocol/sdk": "catalog:",
+    "@types/node": "^24.9.1",
+    "@types/pg": "^8.15.5",
+    "@valkey/valkey-glide": "^2.1.0",
     "ai": "catalog:",
-    "tsdown": "^0.14.1"
+    "consola": "^3.4.2",
+    "drizzle-orm": "^0.44.5",
+    "neverthrow": "catalog:",
+    "pg": "^8.16.3",
+    "tsdown": "^0.14.1",
+    "zod": "catalog:",
+    "zod-from-json-schema": "^0.5.0",
+    "zodv3": "npm:zod@^3.25.76"
   },
-  "module": "./dist/index.mjs",
-  "types": "./dist/index.d.mts",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts",
-    "./ai-sdk": "./src/ai-sdk/index.ts",
-    "./package.json": "./package.json"
+    "./ai": "./src/ai/index.ts",
+    "./utils": "./src/utils/index.ts",
+    "./types": "./src/types/index.ts",
+    "./contracts/*": "./src/contracts/*.ts"
   },
-  "publishConfig": {
-    "exports": {
-      ".": "./dist/index.mjs",
-      "./ai-sdk": "./dist/ai-sdk/index.mjs",
-      "./package.json": "./package.json"
-    }
+  "peerDependencies": {
+    "@valkey/valkey-glide": "^2.1.0",
+    "consola": "^3.4.2",
+    "drizzle-orm": "^0.44.5",
+    "neverthrow": "catalog:",
+    "pg": "^8.16.3",
+    "zod": "catalog:",
+    "zod-from-json-schema": "^0.5.0"
   }
 }

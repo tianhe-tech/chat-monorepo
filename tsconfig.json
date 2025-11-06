@@ -1,0 +1,4 @@
+{
+  "extends": "@th-chat/tsconfig/node.tsconfig.json",
+  "exclude": ["packages", "apps"]
+}

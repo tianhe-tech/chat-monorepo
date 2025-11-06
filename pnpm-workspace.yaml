@@ -4,12 +4,36 @@ packages:
   - apps/*
 
 catalog:
-  '@ai-sdk/openai-compatible': ^1.0.11
-  '@ai-sdk/provider': ^2.0.0
-  '@ai-sdk/vue': ^2.0.15
-  '@modelcontextprotocol/sdk': ^1.17.4
-  ai: ^5.0.15
+  '@ai-sdk/openai-compatible': ^1.0.15
+  '@ai-sdk/provider': 2.0.0
+  '@ai-sdk/vue': 2.0.68
+  '@dotenvx/dotenvx': ^1.51.0
+  '@hono/node-server': ^1.19.4
+  '@hono/swagger-ui': ^0.5.2
+  '@hono/zod-openapi': 1.1.4
+  '@hono/zod-validator': ^0.7.3
+  '@modelcontextprotocol/sdk': ^1.20.0
+  '@scalar/hono-api-reference': 0.9.23
+  ai: 5.0.68
+  hono: ^4.9.9
+  neverthrow: 8.2.0
+  reka-ui: ^2.5.0
+  zod: ^4.1.9
 
 catalogs:
-  hono:
-    hono: ^4.9.2
+  test:
+    '@testcontainers/postgresql': ^11.6.0
+    '@testcontainers/valkey': ^11.6.0
+    vitest: ^3.2.4
+
+ignoredBuiltDependencies:
+  - '@parcel/watcher'
+  - onnxruntime-node
+  - vue-demi
+
+onlyBuiltDependencies:
+  - '@tailwindcss/oxide'
+  - cpu-features
+  - esbuild
+  - protobufjs
+  - ssh2

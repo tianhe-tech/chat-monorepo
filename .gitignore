@@ -27,3 +27,5 @@ logs
 .turbo
 
 .venv
+
+.claude

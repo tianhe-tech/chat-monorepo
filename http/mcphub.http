@@ -1,0 +1,43 @@
+### 
+
+@hostname = localhost
+@port = 3002
+@prefix = /api
+@threadId = {{$uuid}}
+
+
+### Create Config
+
+# @prompt url
+
+POST http://{{hostname}}:{{port}}{{prefix}}/configs HTTP/1.1
+Mcp-Thread-Id: {{threadId}}
+
+{
+  "name": "test",
+  "transport": "streamable_http",
+  "url": "{{url}}"
+}
+
+
+### Get Configs
+
+GET http://{{hostname}}:{{port}}{{prefix}}/configs HTTP/1.1
+Mcp-Thread-Id: {{threadId}}
+
+
+### Get Tools
+
+GET http://{{hostname}}:{{port}}{{prefix}}/tools HTTP/1.1
+Mcp-Thread-Id: {{threadId}}
+
+
+### 
+
+POST http://{{hostname}}:{{port}}{{prefix}}/tools HTTP/1.1
+Mcp-Thread-Id: {{threadId}}
+
+{
+  "name": "test/get_slurm_jobs",
+  "toolCallId": "111"
+}

@@ -7,6 +7,15 @@
   "rules": {
     "default-case": "warn",
     "no-empty": "error",
-    "no-empty-function": ["error", { "alllow": ["arrowFunctions"] }]
+    "no-disabled-tests": "off",
+    "expect-expect": "off",
+    "valid-title": "off",
+    "valid-expect": [
+      "error",
+      {
+        "maxArgs": 2
+      }
+    ],
+    "no-unused-vars": "off"
   }
 }

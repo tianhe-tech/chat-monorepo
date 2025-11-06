@@ -1,0 +1,140 @@
+{
+  "id": "e9f14ea1-d1bc-41be-b9f8-0952915b4360",
+  "prevId": "d820cb4b-56b9-4d1e-840b-1073f644a6f3",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "mcp.server_configs": {
+      "name": "server_configs",
+      "schema": "mcp",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "scope": {
+          "name": "scope",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "transport": {
+          "name": "transport",
+          "type": "transport",
+          "typeSchema": "mcp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "url": {
+          "name": "url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "command": {
+          "name": "command",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "request_init": {
+          "name": "request_init",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "server_configs_userId_scope_name_unique": {
+          "name": "server_configs_userId_scope_name_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "user_id",
+            "scope",
+            "name"
+          ]
+        },
+        "server_configs_userId_scope_url_unique": {
+          "name": "server_configs_userId_scope_url_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "user_id",
+            "scope",
+            "url"
+          ]
+        },
+        "server_configs_userId_scope_command_unique": {
+          "name": "server_configs_userId_scope_command_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "user_id",
+            "scope",
+            "command"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {
+    "mcp.transport": {
+      "name": "transport",
+      "schema": "mcp",
+      "values": [
+        "sse",
+        "streamable_http",
+        "stdio"
+      ]
+    }
+  },
+  "schemas": {
+    "mcp": "mcp"
+  },
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}
