@@ -18,7 +18,7 @@
     "db:push": "dotenvx run -- drizzle-kit push",
     "db:pull": "dotenvx run -- drizzle-kit pull",
     "db:studio": "dotenvx run -- drizzle-kit studio",
-    "prepublishOnly": "build"
+    "prepublishOnly": "pnpm run build"
   },
   "keywords": [],
   "author": "",
