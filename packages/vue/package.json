@@ -23,11 +23,13 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": "./src/index.ts",
+    "./ai": "./src/ai/index.ts",
     "./package.json": "./package.json"
   },
   "publishConfig": {
     "exports": {
       ".": "./dist/index.js",
+      "./ai": "./dist/ai.js",
       "./package.json": "./package.json"
     }
   },
