@@ -4,7 +4,8 @@
   "description": "",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsdown"
+    "build": "tsdown",
+    "prepublishOnly": "pnpm run build"
   },
   "type": "module",
   "keywords": [],
@@ -39,7 +40,7 @@
       "./components/markdown": "./dist/components/markdown/index.js",
       "./components/message": "./dist/components/message/index.js",
       "./components/thread": "./dist/components/thread/index.js",
-      "./theme": "./dist/theme/index.js",
+      "./composables": "./dist/composables/index.js",
       "./package.json": "./package.json",
       ".": {
         "style": "./dist/index.css"
@@ -53,7 +54,7 @@
     "./components/markdown": "./src/components/markdown/index.ts",
     "./components/message": "./src/components/message/index.ts",
     "./components/thread": "./src/components/thread/index.ts",
-    "./theme": "./src/theme/index.ts",
+    "./composables": "./src/composables/index.ts",
     "./package.json": "./package.json",
     ".": {
       "style": "./src/index.css"

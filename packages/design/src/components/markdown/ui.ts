@@ -20,7 +20,7 @@ export default tv({
     table: 'min-w-max text-sm',
     thead: 'border-b',
     th: 'px-4 py-3 text-left font-bold [&[align=center]]:text-center [&[align=right]]:text-right',
-    td: 'max-w-600px px-4 py-3 text-left [&[align=center]]:text-center [&[align=right]]:text-right',
+    td: 'max-w-(--chat-td-max-width) px-4 py-3 text-left [&[align=center]]:text-center [&[align=right]]:text-right',
     tr: 'not-first:border-t',
   },
 })
