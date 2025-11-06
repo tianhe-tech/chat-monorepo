@@ -1,3 +1,5 @@
 export { default as MessageContainer } from './MessageContainer.vue'
 export { default as MessageParts } from './MessageParts.vue'
+export { default as MessageReasoningPart } from './MessageReasoningPart.vue'
+export { default as MessageTextPart } from './MessageTextPart.vue'
 export { default as ui } from './ui'

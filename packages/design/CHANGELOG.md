@@ -1,5 +1,11 @@
 # @th-chat/design
 
+## 1.2.0
+
+### Minor Changes
+
+- 62eeb77: missed some exports
+
 ## 1.1.1
 
 ### Patch Changes

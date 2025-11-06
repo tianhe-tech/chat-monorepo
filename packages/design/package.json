@@ -1,6 +1,6 @@
 {
   "name": "@th-chat/design",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "description": "",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -54,9 +54,6 @@
       }
     }
   },
-  "main": "./dist/index.mjs",
-  "module": "./dist/index.mjs",
-  "types": "./dist/index.d.mts",
   "exports": {
     "./components/markdown": "./src/components/markdown/index.ts",
     "./components/message": "./src/components/message/index.ts",
