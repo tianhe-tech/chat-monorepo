@@ -7,6 +7,10 @@ export default defineConfig({
   },
   exports: {
     devExports: true,
+    customExports: (exports) => {
+      delete exports['.']
+      return exports
+    },
   },
   format: ['esm'],
   dts: true,

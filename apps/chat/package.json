@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "type": "module",
   "description": "",
-  "main": "index.js",
+  "main": "./dist/index.js",
   "scripts": {
     "dev": "dotenvx run -- tsx --watch src/app/index.ts",
     "build": "tsdown",
@@ -64,5 +64,17 @@
     "tsx": "^4.20.5",
     "typescript": "^5.9.2",
     "vitest": "catalog:test"
+  },
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    "./domain": "./src/domain/index.ts",
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "exports": {
+      "./domain": "./dist/domain.js",
+      "./package.json": "./package.json"
+    }
   }
 }

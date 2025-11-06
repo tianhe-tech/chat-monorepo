@@ -1,10 +1,9 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js'
 import { type UIMessage } from 'ai'
-import type { DomainMediator } from '../mediator'
-import { type DataParts, MCPToolPart } from './part'
-import { ResultAsync } from 'neverthrow'
 import assert from 'node:assert'
 import pTimeout from 'p-timeout'
+import type { DomainMediator } from '../mediator'
+import { type DataParts, MCPToolPart } from './part'
 
 export type UIMessageType = UIMessage<never, DataParts, never>
 
