@@ -7,6 +7,9 @@
     "build": "tsdown",
     "prepublishOnly": "pnpm run build"
   },
+  "files": [
+    "dist"
+  ],
   "type": "module",
   "keywords": [],
   "author": "",

@@ -4,6 +4,9 @@
   "type": "module",
   "description": "",
   "main": "./dist/index.js",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "dev": "dotenvx run -- tsx --watch src/app/index.ts",
     "build": "tsdown",
