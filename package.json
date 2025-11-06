@@ -11,10 +11,11 @@
   "license": "ISC",
   "packageManager": "pnpm@10.20.0",
   "devDependencies": {
-    "@th-chat/tsconfig": "workspace:*",
+    "@changesets/cli": "^2.29.7",
     "@prettier/plugin-oxc": "^0.0.4",
     "@testcontainers/postgresql": "catalog:test",
     "@testcontainers/valkey": "catalog:test",
+    "@th-chat/tsconfig": "workspace:*",
     "oxlint": "^1.22.0",
     "prettier": "^3.6.2",
     "prettier-plugin-tailwindcss": "^0.6.14",
