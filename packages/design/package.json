@@ -1,10 +1,10 @@
 {
   "name": "@th-chat/design",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsdown",
+    "build": "tsdown && pnpx @tailwindcss/cli -m -i ./src/index.css -o ./dist/min.css",
     "prepublishOnly": "pnpm run build"
   },
   "files": [
@@ -17,6 +17,7 @@
   "devDependencies": {
     "@iconify-json/devicon": "^1.2.43",
     "@iconify-json/vscode-icons": "^1.2.30",
+    "@tailwindcss/cli": "^4.1.16",
     "@th-chat/tsconfig": "workspace:*",
     "@vueuse/core": "^13.9.0",
     "ai": "catalog:",
@@ -47,6 +48,9 @@
       "./package.json": "./package.json",
       ".": {
         "style": "./dist/index.css"
+      },
+      "css": {
+        "style": "./dist/min.css"
       }
     }
   },
