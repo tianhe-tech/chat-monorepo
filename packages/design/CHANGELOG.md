@@ -1,5 +1,11 @@
 # @th-chat/design
 
+## 1.1.1
+
+### Patch Changes
+
+- bump
+
 ## 1.1.0
 
 ### Minor Changes

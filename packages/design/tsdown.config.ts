@@ -20,7 +20,7 @@ export default defineConfig({
     customExports(exports, context) {
       exports['.'] = { style: context.isPublish ? './dist/index.css' : './src/index.css' }
       if (context.isPublish) {
-        exports.css = { style: './dist/min.css' }
+        exports['./css'] = { style: './dist/min.css' }
       }
       return exports
     },
